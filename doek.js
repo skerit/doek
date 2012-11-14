@@ -1,6 +1,6 @@
-var f = {}
+var Doek = {}
 
-f.Doek = function (containerId) {
+Doek.Canvas = function (containerId) {
 	
 	var that = this;
 	
@@ -48,9 +48,9 @@ f.Doek = function (containerId) {
 /**
  * @param	{string}	name
  * @param	{integer}	zindex
- * @returns	{f.Layer}
+ * @returns	{Doek.Layer}
  */
-f.Doek.prototype.addLayer = function (name, zindex) {
+Doek.Canvas.prototype.addLayer = function (name, zindex) {
 	
 	if (zindex === undefined) zindex = 0;
 	
@@ -60,7 +60,7 @@ f.Doek.prototype.addLayer = function (name, zindex) {
 	
 }
 
-f.Doek.prototype.addGridOld = function (tileSize) {
+Doek.Canvas.prototype.addGridOld = function (tileSize) {
 	
 	if (tileSize === undefined) tileSize = this.settings.tileSize;
 	
@@ -75,7 +75,7 @@ f.Doek.prototype.addGridOld = function (tileSize) {
 	
 }
 
-f.Doek.prototype.addGrid = function (tileSize) {
+Doek.Canvas.prototype.addGrid = function (tileSize) {
 	
 	if (tileSize === undefined) tileSize = this.settings.tileSize;
 	
@@ -97,15 +97,16 @@ f.Doek.prototype.addGrid = function (tileSize) {
 /**
  * @param	{string}	name
  * @param	{integer}	zindex
- * @param	{f.Doek}	canvas
- * @returns	{f.Layer}
+ * @param	{Doek.Canvas}	canvas
+ * @returns	{Doek.Layer}
  */
-f.Layer = function (name, zindex, canvas) {
+Doek.Layer = function (name, zindex, canvas) {
 	
 	/**
-	 * @type {f.Doek}
+	 * @type {Doek.Canvas}
 	 */
 	this.parent = canvas;
+	this._parent = canvas;
 	
 	this.settings = {
 		redraw: true	// Redraw this layer every time
@@ -121,14 +122,18 @@ f.Layer = function (name, zindex, canvas) {
 	canvas.$container.append(this.element);
 	
 	this.objects = [];
+	this._children = this.objects;
 	
 	this.ctx = this.element.getContext('2d');
+	
+	this.events = {};
+	this.event = Doek._addEvent;
 }
 
 /**
  * Draw an object, don't care about clearing
  */
-f.Layer.prototype.drawObject = function (index) {
+Doek.Layer.prototype.drawObject = function (index) {
 	
 	/**
 	 * @type	{f.Object}
@@ -137,7 +142,7 @@ f.Layer.prototype.drawObject = function (index) {
 	o.draw();
 }
 
-f.Layer.prototype.clear = function() {
+Doek.Layer.prototype.clear = function() {
 	this.ctx.clearRect (0, 0,  this.parent.width, this.parent.height);
 	
 	for (var i = 0; i < this.objects.length; i++) {
@@ -146,7 +151,7 @@ f.Layer.prototype.clear = function() {
 	
 }
 
-f.Layer.prototype.addLine = function(sx, sy, dx, dy, strokestyle) {
+Doek.Layer.prototype.addLine = function(sx, sy, dx, dy, strokestyle) {
 	var newObject = new f.Object(this);
 	this.objects.push(newObject);
 	newObject.addLine(sx, sy, dx, dy, strokestyle);
@@ -154,62 +159,73 @@ f.Layer.prototype.addLine = function(sx, sy, dx, dy, strokestyle) {
 }
 
 /**
- * @param	{f.Object}	cobject
+ * @param	{Doek.Object}	cobject
  */
-f.Layer.prototype.addObject = function(cobject) {
+Doek.Layer.prototype.addObject = function(cobject) {
 	this.objects.push(cobject);
 	cobject.draw();
 }
 
 /**
- * @param	{f.Layer} parentLayer
+ * The Doek Object Class
+ *
+ * @param	{Doek.Layer} parentLayer
  */
-f.Object = function(parentLayer) {
+Doek.Object = function(parentLayer) {
 	
 	this.parentLayer = parentLayer;
 	this.nodes = [];
 	
+	this._parent = parentLayer;
+	this._children = this.nodes;
+	
 	this.drawn = false;
 	
+	this.events = {};
+	this.event = Doek._addEvent;
 }
 
 /**
  * Add a node to this object, don't draw it yet
+ *
+ * @param	{object}	instruction
+ * @returns	{Doek.Node}
  */
-f.Object.prototype.addNode = function (node) {
-	var index = this.nodes.push(node);
+Doek.Object.prototype.addNode = function (instruction) {
+	var newNode = new Doek.Node(instruction, this);
+	var index = this.nodes.push(newNode);
+	
+	return newNode;
 }
 
 /**
  * Add a line node to this object
+ *
+ * @returns	{Doek.Node}
  */
-f.Object.prototype.addLine = function(sx, sy, dx, dy, strokestyle) {
-	this.addNode({type: 'line',
-					sx: sx, sy: sy,
-					dx: dx, dy: dy,
-					strokestyle: strokestyle});
+Doek.Object.prototype.addLine = function(sx, sy, dx, dy, strokestyle) {
+	return this.addNode({type: 'line',
+						sx: sx, sy: sy,
+						dx: dx, dy: dy,
+						strokestyle: strokestyle});
 }
 
 /**
  * Draw a node, don't care about clearing
  */
-f.Object.prototype.drawNode = function (index) {
+Doek.Object.prototype.drawNode = function (index) {
 	
-	var o = this.nodes[index];
-	
-	if (o.type == 'line') {
-		this.parentLayer.ctx.strokeStyle = o.strokestyle;
-		this.parentLayer.ctx.beginPath();
-        this.parentLayer.ctx.moveTo(o.sx, o.sy);
-        this.parentLayer.ctx.lineTo(o.dx, o.dy);
-        this.parentLayer.ctx.stroke();
-	}	
+	/**
+	 * @type	{Doek.Node}
+	 */
+	var n = this.nodes[index];
+	n.draw();
 }
 
 /**
  * Draw the entire object
  */
-f.Object.prototype.draw = function () {
+Doek.Object.prototype.draw = function () {
 	
 	for (var i = 0; i < this.nodes.length; i++) {
 		this.drawNode(i);
@@ -221,6 +237,88 @@ f.Object.prototype.draw = function () {
 /**
  * Do this when cleared from the layer
  */
-f.Object.prototype.hasCleared = function () {
+Doek.Object.prototype.hasCleared = function () {
 	this.drawn = false;
+}
+
+/**
+ * The Doek Node class
+ *
+ * @param	{object}		instructions
+ * @param	{Doek.Object}	parentObject
+ */
+Doek.Node = function(instructions, parentObject) {
+	
+	this.type = instructions.type;
+	this.instructions = instructions;
+	
+	this.parentObject = parentObject;
+	this._parent = parentObject;
+	
+	this.events = {};
+	this.event = Doek._addEvent;
+	
+	this.drawn = false;
+	
+}
+
+Doek.Node.prototype.Events = {};
+
+Doek.Node.prototype.draw = function() {
+	
+	var ctx = this.parentObject.parentLayer;
+	var o = this.instructions;
+	
+	if (this.type == 'line') {
+		ctx.strokeStyle = o.strokestyle;
+		ctx.beginPath();
+        ctx.moveTo(o.sx, o.sy);
+        ctx.lineTo(o.dx, o.dy);
+        ctx.stroke();
+	}
+	
+	this.drawn = true;
+}
+
+/**
+ * An Event handler
+ */
+Doek._addEvent = function(eventType, endFunction) {
+	
+	/**
+	 * The direction of the event
+	 * <--   down <-> up   -->
+	 *  layer - object - node
+	 */
+	var bubbleDirection = 'down';
+	
+	if (eventType == 'cleared') {
+		bubbleDirection = 'up';
+	}
+	
+	if (this.events[eventType] === undefined) this.events[eventType] = [];
+	this.events[eventType].push({'type': eventType,
+								'endFunction': endFunction,
+								'direction': bubbleDirection});
+	
+}
+
+/**
+ * Do events
+ */
+Doek._doEvent = function(eventType) {
+	
+	if (this.events[eventType] !== undefined) {
+		var events = this.events[eventType];
+		
+		for (var i = 0; i < events.length; i++) {
+			events[i]['endFunction'](this);
+		}
+		
+		if (events[i]['direction'] == 'up') {
+			
+		}
+		
+	}
+	
 }
