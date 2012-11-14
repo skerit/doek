@@ -54,7 +54,7 @@ Doek.Canvas.prototype.addLayer = function (name, zindex) {
 	
 	if (zindex === undefined) zindex = 0;
 	
-	this.layers[name] = new f.Layer(name, zindex, this);
+	this.layers[name] = new Doek.Layer(name, zindex, this);
 	
 	return this.layers[name];
 	
@@ -81,7 +81,7 @@ Doek.Canvas.prototype.addGrid = function (tileSize) {
 	
 	var layer = this.addLayer('mainGrid', 10);
 	
-	var gridObject = new f.Object(layer);
+	var gridObject = new Doek.Object(layer);
 	
 	// Draw lines
     for (var x = 0; x <= this.width; x = x + tileSize)
@@ -266,7 +266,7 @@ Doek.Node.prototype.Events = {};
 
 Doek.Node.prototype.draw = function() {
 	
-	var ctx = this.parentObject.parentLayer;
+	var ctx = this.parentObject.parentLayer.ctx;
 	var o = this.instructions;
 	
 	if (this.type == 'line') {
