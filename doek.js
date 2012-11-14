@@ -288,7 +288,7 @@ Doek._addEvent = function(eventType, endFunction) {
 	/**
 	 * The direction of the event
 	 * <--   down <-> up   -->
-	 *  layer - object - node
+	 *  layer - object - node - mousecatcher
 	 */
 	var bubbleDirection = 'down';
 	
