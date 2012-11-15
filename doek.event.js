@@ -37,8 +37,10 @@ Doek.Event.prototype.addEvent = function(eventType, endFunction) {
  * Execute & bubble the event
  */
 Doek.Event.prototype.fireEvent = function (eventType, caller) {
-	this.doEvent(eventType, caller);
-	this.bubbleEvent(eventType);
+	
+	var done = this.doEvent(eventType, caller);
+	
+	if (done !== 'endbubble' && done !== 'endall') this.bubbleEvent(eventType);
 }
 
 /**
@@ -50,15 +52,25 @@ Doek.Event.prototype.fireEvent = function (eventType, caller) {
 Doek.Event.prototype.doEvent = function(eventType, caller) {
 
 	eventType = eventType.toLowerCase();
+	var returnval = '';
 
 	// Look for the event in the collection
 	if (this.events[eventType] !== undefined) {
 		var events = this.events[eventType];
 		
 		for (var i = 0; i < events.length; i++) {
-			events[i]['endFunction'].call(this.owner, caller);
+			var done = events[i]['endFunction'].call(this.owner, caller);
+			
+			// Finish our events, but do not bubble up or down
+			if (done == 'endbubble') returnval = done;
+			
+			// Do not do anything after this event
+			if (done == 'endall') return done;
+			
 		}
 	}
+	
+	return returnval;
 }
 
 /**

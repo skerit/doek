@@ -38,6 +38,9 @@ Doek.Layer = function (name, zindex, canvas) {
 		
 		// When the layer gets this request, it means something has actually requested a redraw
 		this.event.fireEvent('redraw', this);
+		
+		// Do not bubble this down any further (to the canvas)
+		return 'endbubble';
 	});
 	
 	this.event.addEvent('redraw', function(caller){
