@@ -53,6 +53,17 @@ Doek.Node = function(instructions, parentObject) {
 		this.position = new Doek.Position(this.parentObject.parentLayer.parentCanvas, x, y, 'abs');
 		
 	}
+	
+	// Add our own events
+	this.event.addEvent('hasCleared', function(caller){
+		this.drawn = false;
+	});
+	
+	this.event.addEvent('redraw', function(caller){
+		this.draw(this.version);
+		this.parentObject.drawn = true;
+		this.drawn = true;
+	});
 
 }
 
@@ -111,6 +122,6 @@ Doek.Node.prototype.draw = function(version) {
 Doek.Node.prototype.move = function(position) {
 	
 	this.position = position;
-	this._doEvent('beforeRedraw');
+	this.event.fireEvent('requestredraw', this);
 	
 }

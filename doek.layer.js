@@ -32,6 +32,18 @@ Doek.Layer = function (name, zindex, canvas) {
 	this.ctx = this.element.getContext('2d');
 	
 	this.event = new Doek.Event(this);
+	
+	// Add our own events
+	this.event.addEvent('requestRedraw', function(caller){
+		
+		// When the layer gets this request, it means something has actually requested a redraw
+		this.event.fireEvent('redraw', this);
+	});
+	
+	this.event.addEvent('redraw', function(caller){
+		this.clear();
+	});
+	
 }
 
 /**
@@ -68,11 +80,8 @@ Doek.Layer.prototype.drawObject = function (index) {
 }
 
 Doek.Layer.prototype.clear = function() {
-	this.ctx.clearRect (0, 0,  this.parent.width, this.parent.height);
-	
-	for (var key in this.objects.storage) {
-		this.objects.storage[key].hasCleared();
-	}
+	this.ctx.clearRect (0, 0,  this.parent.width, this.parent.height);	
+	this.event.fireEvent('hasCleared', this);
 	
 }
 

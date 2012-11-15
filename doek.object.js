@@ -20,6 +20,11 @@ Doek.Object = function(parentLayer) {
 	this.dx = 0;
 	this.dy = 0;
 	
+	// Add our own events
+	this.event.addEvent('hasCleared', function(caller){
+		this.drawn = false;
+	});
+	
 }
 
 /**
@@ -57,7 +62,13 @@ Doek.Object.prototype.addNode = function (instruction) {
 	if (this.y > newNode.y) this.y = newNode.y;
 	if (this.dx < newNode.dx) this.dx = newNode.dx;
 	if (this.dy < newNode.dy) this.dy = newNode.dy;
-	newNode.event.addEvent('mouseMove', function(caller){console.log('mousemove');});
+	
+	newNode.event.addEvent('mouseMove', function(caller){
+		console.log('mousemove');
+		var p = new Doek.Position(this.parentObject.parentLayer.parentCanvas, newNode.position.absX-1, newNode.position.absY-1);
+		this.move(p);
+		});
+	
 	return newNode;
 }
 
@@ -95,11 +106,4 @@ Doek.Object.prototype.draw = function () {
 	}
 	
 	this.drawn = true;
-}
-
-/**
- * Do this when cleared from the layer
- */
-Doek.Object.prototype.hasCleared = function () {
-	this.drawn = false;
 }

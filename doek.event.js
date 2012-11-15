@@ -9,9 +9,10 @@ Doek.Event = function(owner) {
 	 *  layer - object - node - mousecatcher
 	 */
 	this.directions = {
-		mousemove: 'down',
-		beforeredraw: 'down',
-		cleared: 'up'
+		mousemove: 'down',		// A mouse has moved over us
+		requestredraw: 'down',	// A parent has requested a redraw
+		cleared: 'up',			// We have been cleared
+		redraw: 'up'			// Parent requests a redraw
 	}
 }
 
@@ -72,9 +73,9 @@ Doek.Event.prototype.bubbleEvent = function(eventType) {
 	if (this.directions[eventType] !== undefined) direction = this.directions[eventType];
 	
 	// Inform children of the event if direction is up
-	if (direction == 'up' && this.owner._children.storage !== undefined) {
-		for (var key in this._children.storage) {
-			this.owner._children.storage.event.fireEvent(eventType, this.owner);
+	if (direction == 'up' && this.owner._children !== undefined) {
+		for (var key in this.owner._children.storage) {
+			this.owner._children.storage[key].event.fireEvent(eventType, this.owner);
 		}
 	} else if (direction == 'down' && this.owner._parent !== undefined) {
 		
