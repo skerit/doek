@@ -29,19 +29,46 @@ Doek.Canvas = function (containerId) {
 	
 	// Storage
 	this.layers = {};
+	this._children = this.layers;
 	
 	// Mouse events will be captured by the container
 	this.$container.click(function(e) {
-        
+		var p = new Doek.Position(that, e.offsetX, e.offsetY, 'abs');
+        var node = that.findTarget(p);
+        if (node) node._doEvent('click');
     });
     
     this.$container.mouseover(function(e) {
-        
+		//var p = new Doek.Position(that, e.offsetX, e.offsetY, 'abs');
+        //that.findTarget(p);
     });
     
     this.$container.mousemove(function(e) {
-        
+        var p = new Doek.Position(that, e.offsetX, e.offsetY, 'abs');
+        var node = that.findTarget(p);
+		
+		if (node) node._doEvent('mousemove');
+		
     });
+	
+}
+
+/**
+ * @param	{Doek.Position}	position
+ * @returns	{Doek.Node}
+ */
+Doek.Canvas.prototype.findTarget = function (position) {
+	
+	for (var index in this.layers) {
+		
+		/**
+		 * @type	{Doek.Layer}
+		 */
+		var layer = this.layers[index];
+		return layer.findTarget(position);
+	}
+	
+	return false;
 	
 }
 
@@ -121,13 +148,33 @@ Doek.Layer = function (name, zindex, canvas) {
 	
 	canvas.$container.append(this.element);
 	
-	this.objects = [];
+	this.objects = new Doek.Collection();
 	this._children = this.objects;
 	
 	this.ctx = this.element.getContext('2d');
 	
 	this.events = {};
 	this.event = Doek._addEvent;
+}
+
+/**
+ * @param	{Doek.Position}	position
+ */
+Doek.Layer.prototype.findTarget = function (position) {
+	
+	for (var index in this.objects.storage) {
+		
+		/**
+		 * @type	{Doek.Object}
+		 */
+		var object = this.objects.storage[index];
+
+		if ((position.mapX >= object.x && position.mapX <= object.dx) &&
+			(position.mapY >= object.y && position.mapY <= object.dy)) {
+			return object.findTarget(position);
+		}
+	}
+	return false;
 }
 
 /**
@@ -138,21 +185,21 @@ Doek.Layer.prototype.drawObject = function (index) {
 	/**
 	 * @type	{f.Object}
 	 */
-	var o = this.objects[index];
+	var o = this.objects.storage[index];
 	o.draw();
 }
 
 Doek.Layer.prototype.clear = function() {
 	this.ctx.clearRect (0, 0,  this.parent.width, this.parent.height);
 	
-	for (var i = 0; i < this.objects.length; i++) {
-		this.objects[i].hasCleared();
+	for (var key in this.objects.storage) {
+		this.objects.storage[key].hasCleared();
 	}
 	
 }
 
 Doek.Layer.prototype.addLine = function(sx, sy, dx, dy, strokestyle) {
-	var newObject = new f.Object(this);
+	var newObject = new Doek.Object(this);
 	this.objects.push(newObject);
 	newObject.addLine(sx, sy, dx, dy, strokestyle);
 	newObject.draw();
@@ -174,7 +221,7 @@ Doek.Layer.prototype.addObject = function(cobject) {
 Doek.Object = function(parentLayer) {
 	
 	this.parentLayer = parentLayer;
-	this.nodes = [];
+	this.nodes = new Doek.Collection();
 	
 	this._parent = parentLayer;
 	this._children = this.nodes;
@@ -183,6 +230,33 @@ Doek.Object = function(parentLayer) {
 	
 	this.events = {};
 	this.event = Doek._addEvent;
+	
+	this.x = 0;
+	this.y = 0;
+	this.dx = 0;
+	this.dy = 0;
+	
+}
+
+/**
+ * @param	{Doek.Position}	position
+ * @returns	{Doek.Node}
+ */
+Doek.Object.prototype.findTarget = function (position) {
+	
+	for (var index in this.nodes.storage) {
+		
+		/**
+		 * @type	{Doek.Node}
+		 */
+		var node = this.nodes.storage[index];
+
+		if ((position.mapX >= node.x && position.mapX <= node.dx) &&
+			(position.mapY >= node.y && position.mapY <= node.dy)) {
+			return node;
+		}
+	}
+	return false;
 }
 
 /**
@@ -195,6 +269,11 @@ Doek.Object.prototype.addNode = function (instruction) {
 	var newNode = new Doek.Node(instruction, this);
 	var index = this.nodes.push(newNode);
 	
+	if (this.x > newNode.x) this.x = newNode.x;
+	if (this.y > newNode.y) this.y = newNode.y;
+	if (this.dx < newNode.dx) this.dx = newNode.dx;
+	if (this.dy < newNode.dy) this.dy = newNode.dy;
+	newNode.event('mousemove', function(){console.log('mousemove')});
 	return newNode;
 }
 
@@ -218,7 +297,7 @@ Doek.Object.prototype.drawNode = function (index) {
 	/**
 	 * @type	{Doek.Node}
 	 */
-	var n = this.nodes[index];
+	var n = this.nodes.storage[index];
 	n.draw();
 }
 
@@ -227,8 +306,8 @@ Doek.Object.prototype.drawNode = function (index) {
  */
 Doek.Object.prototype.draw = function () {
 	
-	for (var i = 0; i < this.nodes.length; i++) {
-		this.drawNode(i);
+	for (var key in this.nodes.storage) {
+		this.drawNode(key);
 	}
 	
 	this.drawn = true;
@@ -256,9 +335,49 @@ Doek.Node = function(instructions, parentObject) {
 	this._parent = parentObject;
 	
 	this.events = {};
+	
+	/**
+	 * @type	{Doek._addEvent}
+	 */
 	this.event = Doek._addEvent;
 	
-	this.drawn = false;
+	this._doEvent = Doek._doEvent;
+	
+	this.drawn = false;		// Is it drawn on the parent?
+	this._idrawn = false;	// Is it drawn internally?
+	
+	this._element = document.createElement('canvas');
+	
+	// Calculate the bounding box
+	if (this.type == 'line') {
+		
+		// The position on the parent relative to the sx
+		var pw = this.instructions.sx - this.instructions.dx;
+		var ph = this.instructions.sy - this.instructions.dy;
+		
+		this.width = 3 + Math.abs(pw);
+		this.height = 3 + Math.abs(ph);
+		
+		this.x = this.instructions.sx;
+		this.y = this.instructions.sy;
+		this.dx = this.instructions.dx;
+		this.dy = this.instructions.dy;
+		
+		if (this.instructions.dx < this.instructions.sx) {
+			this.x = this.x - this.width;
+		}
+		
+		if (this.instructions.dy < this.instructions.sy) {
+			this.y = this.y - this.height;
+		}
+		
+	}
+	
+	this._element.setAttribute('width', this.width);
+	this._element.setAttribute('height', this.height);
+
+	// Get the ctx
+	this._ctx = this._element.getContext('2d');
 	
 }
 
@@ -266,9 +385,33 @@ Doek.Node.prototype.Events = {};
 
 Doek.Node.prototype.draw = function() {
 	
-	var ctx = this.parentObject.parentLayer.ctx;
+	var ctx = this._ctx;
 	var o = this.instructions;
 	
+	if (this.type == 'line' && !this._idrawn) {
+		ctx.strokeStyle = o.strokestyle;
+		ctx.beginPath();
+        ctx.moveTo(1, 1);
+        ctx.lineTo(this.width-2, this.height-2);
+        ctx.stroke();
+		
+		// It has now been drawn internally
+		this._idrawn = true;
+	}
+	
+	var ctx = this.parentObject.parentLayer.ctx;
+	
+	ctx.drawImage(this._element, this.x-1, this.y-1);
+	
+	this.drawn = true;
+
+}
+
+Doek.Node.prototype.olddraw = function() {
+	
+	var ctx = this.parentObject.parentLayer.ctx;
+	var o = this.instructions;
+
 	if (this.type == 'line') {
 		ctx.strokeStyle = o.strokestyle;
 		ctx.beginPath();
@@ -281,7 +424,7 @@ Doek.Node.prototype.draw = function() {
 }
 
 /**
- * An Event handler
+ * Add an event to something
  */
 Doek._addEvent = function(eventType, endFunction) {
 	
@@ -304,7 +447,7 @@ Doek._addEvent = function(eventType, endFunction) {
 }
 
 /**
- * Do events
+ * Perform the event of something
  */
 Doek._doEvent = function(eventType) {
 	
@@ -312,13 +455,81 @@ Doek._doEvent = function(eventType) {
 		var events = this.events[eventType];
 		
 		for (var i = 0; i < events.length; i++) {
-			events[i]['endFunction'](this);
-		}
-		
-		if (events[i]['direction'] == 'up') {
+			events[i]['endFunction'].call(this);
 			
+			if (events[i]['direction'] == 'up') {
+			
+			}
 		}
-		
 	}
+}
+
+/**
+ * A position object
+ * @param	{Doek.Canvas}	canvas
+ * @param	{integer}		x
+ * @param	{integer}		y
+ * @param	{string}		type
+ */
+Doek.Position = function(canvas, x, y, type) {
 	
+	if (type === undefined) type = 'abs';
+	
+	var size = canvas.settings.tileSize;
+	
+	this.absX = x;
+	this.absY = y;
+	
+    this.canvasX = this.absX;
+    this.canvasY = this.absY;
+	
+	// fix for map coordinates
+	this.mapX = this.canvasX;
+	this.mapY = this.canvasY;
+	
+	// Fix for tiled info
+	this.tiledCanvasX = ~~(this.absX / size);
+    this.tiledCanvasY = ~~(this.absY / size);
+	
+}
+
+Doek.Position.prototype.help = function() {
+	
+}
+
+/**
+ * An array like object
+ */
+Doek.Collection = function() {
+	
+	this.storage = {};
+	this.index = 0;
+	this.length = 0;
+	
+}
+
+/**
+ * Push an object in the collection, return its id
+ */
+Doek.Collection.prototype.push = function(obj) {
+	
+	// Increase the counter by one
+	this.index++;
+	this.length++;
+	
+	// Add the object to the storage container
+	this.storage[this.index] = obj;
+	
+	// Return the id
+	return this.index;
+}
+
+/**
+ * Delete an object from the collection
+ */
+Doek.Collection.prototype.remove = function(index) {
+	
+	delete this.storage[index];
+	
+	this.length--;	
 }
