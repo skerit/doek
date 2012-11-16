@@ -69,3 +69,29 @@ Doek.Collection.prototype.remove = function(index) {
 	
 	this.length--;	
 }
+
+Doek.Style = function(stylename) {
+	
+	this.name = stylename;
+	
+	this.properties = {};
+	this.properties.fillStyle = null;
+	this.properties.strokeStyle = null;
+	
+}
+
+/**
+ * Copy over another style, except for null values
+ * @param	{Doek.Style}	style
+ */
+Doek.Style.prototype.merge = function (style) {
+	
+	// Symlink to the given properties
+	var props = style.properties;
+	
+	for(var key in props) {
+		if (props[key] !== null) {
+			this.properties[key] = props[key];
+		}
+	}
+}

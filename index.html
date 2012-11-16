@@ -17,7 +17,35 @@
         
         <script>
             var d = new Doek.Canvas('world');
-            d.addGrid();
+            var gridObject = d.addGrid();
+            
+            var hoverStyle = new Doek.Style('hover');
+            hoverStyle.properties.strokeStyle = '#EE3030';
+            gridObject.addStyle(hoverStyle);
+            
+            var upStyle = new Doek.Style('upped');
+            upStyle.properties.strokeStyle = '#101099';
+            gridObject.addStyle(upStyle);
+            
+            gridObject.event.addEvent('mouseMove', function(caller){
+                this.applyStyle('hover');
+            });
+            
+            gridObject.event.addEvent('mouseOut', function(caller){
+                this.applyStyle('ori');
+            });
+            
+            gridObject.event.addEvent('mousedown', function(caller, payload){
+                console.log(payload);
+            });
+            
+            gridObject.event.addEvent('mouseup', function(callernode, payload){
+                if (payload.originnode != callernode) {
+                    callernode.applyStyle('upped');
+                }
+                
+                console.log(payload);
+            });
         </script>
     </body>
 </html>

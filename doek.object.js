@@ -12,7 +12,7 @@ Doek.Object = function(parentLayer) {
 	this._children = this.nodes;
 	
 	this.drawn = false;
-	
+	this.clickable = true;
 	this.event = new Doek.Event(this);
 	
 	this.x = 0;
@@ -63,25 +63,20 @@ Doek.Object.prototype.addNode = function (instruction) {
 	if (this.dx < newNode.dx) this.dx = newNode.dx;
 	if (this.dy < newNode.dy) this.dy = newNode.dy;
 	
-	newNode.event.addEvent('mouseMove', function(caller){
-		console.log('mousemove');
-		var p = new Doek.Position(this.parentObject.parentLayer.parentCanvas, newNode.position.absX-1, newNode.position.absY-1);
-		this.move(p);
-		});
-	
 	return newNode;
 }
 
 /**
  * Add a line node to this object
  *
+ * @param	{Doek.Style}	style
  * @returns	{Doek.Node}
  */
-Doek.Object.prototype.addLine = function(sx, sy, dx, dy, strokestyle) {
+Doek.Object.prototype.addLine = function(sx, sy, dx, dy, style) {
 	return this.addNode({type: 'line',
 						sx: sx, sy: sy,
 						dx: dx, dy: dy,
-						strokestyle: strokestyle});
+						style: style});
 }
 
 /**
@@ -106,4 +101,32 @@ Doek.Object.prototype.draw = function () {
 	}
 	
 	this.drawn = true;
+}
+
+/**
+ * Add a new style to the child, only if it does not exist yet
+ * @param	{Doek.Style}	style
+ */
+Doek.Object.prototype.addStyle = function(style) {
+	
+	// Add the style to all the child nodes
+	for (var index in this.nodes.storage) {
+		this.nodes.storage[index].addStyle(style);
+	}
+}
+
+/**
+ * Apply a certain style to the child nodes
+ */
+Doek.Object.prototype.applyStyle = function (stylename) {
+	
+	// Apply the style to all the child nodes directly,
+	// We also ask the function to NOT request a redraw,
+	// we'll do that when we're finished
+	for (var index in this.nodes.storage) {
+		this.nodes.storage[index].applyStyle(stylename, false);
+	}
+	
+	this.event.fireEvent('requestredraw', this);
+	
 }

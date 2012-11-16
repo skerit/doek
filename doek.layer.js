@@ -12,7 +12,7 @@ Doek.Layer = function (name, zindex, canvas) {
 	this.parentCanvas = canvas;
 	this.parent = canvas;
 	this._parent = canvas;
-	
+	this.clickable = true;
 	this.settings = {
 		redraw: true	// Redraw this layer every time
 	}
@@ -51,9 +51,12 @@ Doek.Layer = function (name, zindex, canvas) {
 
 /**
  * @param	{Doek.Position}	position
+ * @param	{boolean} onlyClickable
  * @returns	{Doek.Node}
  */
-Doek.Layer.prototype.findNode = function (position) {
+Doek.Layer.prototype.findNode = function (position, onlyClickable) {
+	
+	if (onlyClickable === undefined) onlyClickable = true;
 	
 	for (var index in this.objects.storage) {
 		
@@ -64,7 +67,9 @@ Doek.Layer.prototype.findNode = function (position) {
 
 		if ((position.mapX >= object.x && position.mapX <= object.dx) &&
 			(position.mapY >= object.y && position.mapY <= object.dy)) {
-			return object.findNode(position);
+			
+			// Don't continue of the object isn't clickable
+			if (object.clickable || !onlyClickable) return object.findNode(position);
 		}
 	}
 	return false;
@@ -88,10 +93,13 @@ Doek.Layer.prototype.clear = function() {
 	
 }
 
-Doek.Layer.prototype.addLine = function(sx, sy, dx, dy, strokestyle) {
+/**
+ * @param	{Doek.Style}	style
+ */
+Doek.Layer.prototype.addLine = function(sx, sy, dx, dy, style) {
 	var newObject = new Doek.Object(this);
 	this.objects.push(newObject);
-	newObject.addLine(sx, sy, dx, dy, strokestyle);
+	newObject.addLine(sx, sy, dx, dy, style);
 	newObject.draw();
 }
 

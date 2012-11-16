@@ -12,7 +12,11 @@ Doek.Event = function(owner) {
 		mousemove: 'down',		// A mouse has moved over us
 		requestredraw: 'down',	// A parent has requested a redraw
 		cleared: 'up',			// We have been cleared
-		redraw: 'up'			// Parent requests a redraw
+		redraw: 'up',			// Parent requests a redraw
+		mouseout: false,		// The cursor has moved away
+		mouseenter: false,		// The cursor has entered us
+		mousedown: false,		// The item is clicked
+		mouseup: false			// The item is released
 	}
 }
 
@@ -36,9 +40,9 @@ Doek.Event.prototype.addEvent = function(eventType, endFunction) {
 /**
  * Execute & bubble the event
  */
-Doek.Event.prototype.fireEvent = function (eventType, caller) {
+Doek.Event.prototype.fireEvent = function (eventType, caller, payload) {
 	
-	var done = this.doEvent(eventType, caller);
+	var done = this.doEvent(eventType, caller, payload);
 	
 	if (done !== 'endbubble' && done !== 'endall') this.bubbleEvent(eventType);
 }
@@ -49,7 +53,7 @@ Doek.Event.prototype.fireEvent = function (eventType, caller) {
  * @param	{string}	eventType	The type of event
  * @param	{object}	caller		Where the event came from (direct parent or child)
  */
-Doek.Event.prototype.doEvent = function(eventType, caller) {
+Doek.Event.prototype.doEvent = function(eventType, caller, payload) {
 
 	eventType = eventType.toLowerCase();
 	var returnval = '';
@@ -59,7 +63,7 @@ Doek.Event.prototype.doEvent = function(eventType, caller) {
 		var events = this.events[eventType];
 		
 		for (var i = 0; i < events.length; i++) {
-			var done = events[i]['endFunction'].call(this.owner, caller);
+			var done = events[i]['endFunction'].call(this.owner, caller, payload);
 			
 			// Finish our events, but do not bubble up or down
 			if (done == 'endbubble') returnval = done;
