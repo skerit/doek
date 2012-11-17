@@ -45,6 +45,10 @@ Doek.Canvas = function (containerId) {
 	// What the start position of a click was
 	this._startPosition = false;
 	
+	// What mode are we in?
+	this._mode = 'normal';
+	this._action = false;
+	
 	// Mouse events will be captured by the container
 	// We will look for the top node, send it the mouse event
 	// and let it inform its parents.
@@ -65,7 +69,11 @@ Doek.Canvas = function (containerId) {
         var p = new Doek.Position(that, e.offsetX, e.offsetY, 'abs');
         var node = that.findNode(p);
 		
-		that.applyNodeMouse(node);
+		var payload = {position: p}
+		
+		that.applyNodeMouse(node, payload);
+		
+		that.event.fireEvent('mousemove', this, payload);
 		
     });
 	
@@ -80,6 +88,8 @@ Doek.Canvas = function (containerId) {
 		this._startPosition = p;
 		
 		if (node) node.event.fireEvent('mousedown', that, payload);
+		
+		that.event.fireEvent('mousedown', this);
     });
 	
 	this.$container.mouseup(function(e) {
@@ -100,14 +110,51 @@ Doek.Canvas = function (containerId) {
 		
 		if (node) node.event.fireEvent('mouseup', that, payload);
 		
+		that.event.fireEvent('mouseup', this);
+		
     });
 	
 }
 
 /**
+ * @param	{string}	modename
+ */
+Doek.Canvas.prototype.setMode = function (modename) {
+	
+	var prevMode = this._mode;
+	var prevAction = this._action;
+	
+	this._mode = modename;
+	this._action = false;
+	
+	if (prevMode != modename) {
+		this.event.fireEvent('modechange', this, {oldmode: prevMode, oldaction: prevAction, newmode: modename, newaction: false})
+	}
+	
+}
+
+/**
+ * @param	{string}	actionname
+ */
+Doek.Canvas.prototype.setAction = function (actionname) {
+	
+	var prevAction = this._action;
+	this._action = actionname;
+	
+	if (prevAction != actionname) {
+		this.event.fireEvent('actionchange', this, {oldaction: prevAction, newaction: actionname, mode: this._mode})
+	}
+	
+}
+
+Doek.Canvas.prototype.resetMode = function() {
+	this.setMode('normal');
+}
+
+/**
  * @param	{Doek.Node}	newNode
  */
-Doek.Canvas.prototype.applyNodeMouse = function (newNode) {
+Doek.Canvas.prototype.applyNodeMouse = function (newNode, payload) {
 	
 	// Get the previous node
 	var prevNode = this._hoverNode;
@@ -119,24 +166,24 @@ Doek.Canvas.prototype.applyNodeMouse = function (newNode) {
 		
 		// There was a previous node
 		if (prevNode) {
-			prevNode.event.fireEvent('mouseout', this);
+			prevNode.event.fireEvent('mouseout', this, payload);
 		
 			// If the objects also differ, inform them too	
 			if (newNode.parentObject != prevNode.parentObject) {
-				prevNode.parentObject.event.fireEvent('mouseout', this);
+				prevNode.parentObject.event.fireEvent('mouseout', this, payload);
 			}
 		} else {
-			if (newNode) newNode.parentObject.event.fireEvent('mouseenter', this);
+			if (newNode) newNode.parentObject.event.fireEvent('mouseenter', this, payload);
 		}
 		
-		if (newNode) newNode.event.fireEvent('mouseenter', this);
+		if (newNode) newNode.event.fireEvent('mouseenter', this, payload);
 		
 	}
 	
 	// Set the newly found node (or false) as the hovernode
 	this._hoverNode = newNode;
 
-	if (newNode) newNode.event.fireEvent('mousemove', this);
+	if (newNode) newNode.event.fireEvent('mousemove', this, payload);
 }
 
 /**
@@ -181,21 +228,6 @@ Doek.Canvas.prototype.addLayer = function (name, zindex) {
 	
 }
 
-Doek.Canvas.prototype.addGridOld = function (tileSize) {
-	
-	if (tileSize === undefined) tileSize = this.settings.tileSize;
-	
-	var layer = this.addLayer('oldMainGrid', 10);
-	
-	// Draw lines
-    for (var x = 0; x <= this.width; x = x + tileSize)
-	layer.addLine(x, 0, x, this.height, '#EEEEEE');
-    
-    for (var y = 0; y <= this.height; y = y + tileSize)
-	layer.addLine(0, y, this.width, y, '#EEEEEE');
-	
-}
-
 /**
  * @returns	{Doek.Object}
  */
@@ -206,6 +238,8 @@ Doek.Canvas.prototype.addGrid = function (tileSize) {
 	var layer = this.addLayer('mainGrid', 10);
 	
 	var gridObject = new Doek.Object(layer);
+	
+	gridObject.clickable = false;
 	
 	var style = new Doek.Style('ori');
 	style.properties.strokeStyle = '#EEEEEE';

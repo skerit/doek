@@ -24,6 +24,9 @@ Doek.Layer = function (name, zindex, canvas) {
 	this.element.setAttribute('id', canvas.id + '-' + name);
 	this.element.style.zIndex = this.zindex;
 	
+	// Set some css stuff
+	$(this.element).css('position', 'absolute');
+	
 	canvas.$container.append(this.element);
 	
 	this.objects = new Doek.Collection();

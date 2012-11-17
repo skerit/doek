@@ -43,8 +43,24 @@
                 if (payload.originnode != callernode) {
                     callernode.applyStyle('upped');
                 }
+            });
+            
+            var layer = d.addLayer('main', 5);
+            var obj = new Doek.Object(layer);
+            
+            var style = new Doek.Style('ori');
+            style.properties.strokeStyle = '#DD0000';
+            
+            var mynode = obj.addLine(150, 60, 20, 300, style);
+            layer.addObject(obj);
+            
+            d.setMode('edit');
+            d.setAction('drawline');
+            
+            d.event.addEvent('mousemove', function (caller, payload) {
+                var pos = payload.position;
+                mynode.setEndpoint(pos);
                 
-                console.log(payload);
             });
         </script>
     </body>

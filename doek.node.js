@@ -6,10 +6,14 @@
  */
 Doek.Node = function(instructions, parentObject) {
 	
+	// The type of node to draw
 	this.type = instructions.type;
-	this.instructions = instructions;
 	
-	this.styles = {};
+	// The original given instructions
+	this.originalinstructions = instructions;
+	
+	// Current instructions
+	this.instructions = Doek.deepCopy(instructions);
 	
 	/**
 	 * @type	{Doek.Object}
@@ -30,46 +34,23 @@ Doek.Node = function(instructions, parentObject) {
 	 */
 	this.position = {};
 	
-	// Calculate the bounding box
-	if (this.type == 'line') {
-		
-		// The position on the parent relative to the sx
-		var pw = this.instructions.sx - this.instructions.dx;
-		var ph = this.instructions.sy - this.instructions.dy;
-		
-		this.width = 3 + Math.abs(pw);
-		this.height = 3 + Math.abs(ph);
-		
-		var x = this.instructions.sx;
-		var y = this.instructions.sy;
-		this.dx = this.instructions.dx;
-		this.dy = this.instructions.dy;
-		
-		// Start copying styles
-		// Create a new ori style (the default style)
-		// We'll copy every property in here
-		var gS = this.instructions.style;
-		
-		this.styles.ori = new Doek.Style('ori');
-		this.styles.ori.merge(gS);
-		
-		// Set this as the active style
-		this.activeStyle = this.styles.ori;
-		
-		// If we gave this another name than ori, also copy that
-		this.addStyle(gS);
-
-		if (this.instructions.dx < this.instructions.sx) {
-			x = x - this.width;
-		}
-		
-		if (this.instructions.dy < this.instructions.sy) {
-			y = y - this.height;
-		}
-		
-		this.position = new Doek.Position(this.parentObject.parentLayer.parentCanvas, x, y, 'abs');
-		
-	}
+	this.styles = {};
+	
+	// Start copying styles
+	// Create a new ori style (the default style)
+	// We'll copy every property in here
+	var gS = this.instructions.style;
+	
+	this.styles.ori = new Doek.Style('ori');
+	this.styles.ori.merge(gS);
+	
+	// Set this as the active style
+	this.activeStyle = this.styles.ori;
+	
+	// If we gave this another name than ori, also copy that
+	this.addStyle(gS);
+	
+	this.calculate();
 	
 	// Add our own event listeners
 	this.event.addEvent('hasCleared', function(caller){
@@ -100,7 +81,34 @@ Doek.Node = function(instructions, parentObject) {
 
 }
 
-Doek.Node.prototype.Events = {};
+Doek.Node.prototype.calculate = function() {
+	
+	// Calculate the bounding box
+	if (this.type == 'line') {
+		
+		var sx = this.instructions.sx;
+		var sy = this.instructions.sy;
+		var dx = this.instructions.dx;
+		var dy = this.instructions.dy;
+		
+		// The position on the parent relative to the sx
+		var pw = this.instructions.sx - this.instructions.dx;
+		var ph = this.instructions.sy - this.instructions.dy;
+		
+		this.width = 3 + Math.abs(pw);
+		this.height = 3 + Math.abs(ph);
+		
+		if (this.instructions.dx < this.instructions.sx) {
+			sx = sx - this.width;
+		}
+		
+		if (this.instructions.dy < this.instructions.sy) {
+			sy = sy - this.height;
+		}
+		
+		this.position = new Doek.Position(this.parentObject.parentLayer.parentCanvas, sx, sy, 'abs');
+	}
+}
 
 /**
  * Draw the node with the active style
@@ -132,8 +140,30 @@ Doek.Node.prototype.draw = function() {
 		
 		ctx.strokeStyle = this.activeStyle.properties.strokeStyle;
 		ctx.beginPath();
-        ctx.moveTo(1, 1);
-        ctx.lineTo(this.width-2, this.height-2);
+		
+		var sx = 0;
+		var sy = 0;
+		var dx = 0;
+		var dy = 0;
+		
+		if (this.instructions.dx < this.instructions.sx) {
+			sx = this.width;
+			dx = 0;
+		} else {
+			sx = 0;
+			dx = this.width;
+		}
+		
+		if (this.instructions.dy < this.instructions.sy) {
+			sy = this.height;
+			dy = 0;
+		} else {
+			sy = 0;
+			dy = this.height;
+		}
+		
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(dx, dy);
         ctx.stroke();
 		
 		// It has now been drawn internally
@@ -146,6 +176,27 @@ Doek.Node.prototype.draw = function() {
 	
 	this.drawn = true;
 
+}
+
+/**
+ * Set the endpoint
+ * @param	{Doek.Position}	endposition
+ */
+Doek.Node.prototype.setEndpoint = function(endposition) {
+	
+	// Reset the drawn cache
+	this._idrawn = {};
+	
+	if (this.type == 'line') {
+		
+		this.instructions.dx = endposition.absX;
+		this.instructions.dy = endposition.absY;
+		
+	}
+	
+	this.calculate();
+	this.event.fireEvent('requestredraw', this);
+	
 }
 
 /**

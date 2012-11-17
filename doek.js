@@ -95,3 +95,19 @@ Doek.Style.prototype.merge = function (style) {
 		}
 	}
 }
+
+/**
+ * Make a copy of an object, so we can use it regulary and not by reference
+ * @param    obj     {object}    // The object you want
+ * @returns  {object}            // The same object, but modifyable
+ */
+Doek.deepCopy = function(obj) {
+    if (typeof obj !== "object" || obj == null) return obj;
+
+    var retVal = new obj.constructor();
+    for (var key in obj) {
+        if (!obj.hasOwnProperty(key)) continue;
+        retVal[key] = Doek.deepCopy(obj[key]);
+    }
+    return retVal;
+}

@@ -16,7 +16,9 @@ Doek.Event = function(owner) {
 		mouseout: false,		// The cursor has moved away
 		mouseenter: false,		// The cursor has entered us
 		mousedown: false,		// The item is clicked
-		mouseup: false			// The item is released
+		mouseup: false,			// The item is released
+		modechange: 'up',
+		actionchange: 'up'
 	}
 }
 
