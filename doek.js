@@ -39,6 +39,7 @@ Doek.Position.prototype.help = function() {
 Doek.Collection = function() {
 	
 	this.storage = {};
+	this._named = {};
 	this.index = 0;
 	this.length = 0;
 	
@@ -47,7 +48,9 @@ Doek.Collection = function() {
 /**
  * Push an object in the collection, return its id
  */
-Doek.Collection.prototype.push = function(obj) {
+Doek.Collection.prototype.push = function (obj) {
+	
+	var thisCollection = this;
 	
 	// Increase the counter by one
 	this.index++;
@@ -56,18 +59,47 @@ Doek.Collection.prototype.push = function(obj) {
 	// Add the object to the storage container
 	this.storage[this.index] = obj;
 	
+	// Set the index in the obj
+	obj._collectionIndex = this.index;
+	
+	// If the object has a name, store it in the named obj too
+	if (obj.name !== undefined) this._named[obj.name] = obj;
+	
+	// Set the obj remove function
+	obj._remove = function(id) {return function(){thisCollection.remove(id)}}(this.index);
+	
 	// Return the id
 	return this.index;
 }
 
 /**
+ * Get an object by name
+ * @returns	{object}
+ */
+Doek.Collection.prototype.getByName = function (name) {
+	
+	if (this._named[name] !== undefined) return this._named[name];
+	else return false;
+	
+}
+
+/**
  * Delete an object from the collection
  */
-Doek.Collection.prototype.remove = function(index) {
+Doek.Collection.prototype.remove = function (index) {
 	
-	delete this.storage[index];
+	if (this.storage[index] !== undefined) {
+		
+		// Don't forget to remove it from the named object as well, otherwise it'll keep existing
+		if (this.storage[index].name) {
+			var name = this.storage[index].name;
+			delete this._named[name];
+		}
+		
+		delete this.storage[index];
+		this.length--;	
+	}
 	
-	this.length--;	
 }
 
 Doek.Style = function(stylename) {

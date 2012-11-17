@@ -29,8 +29,9 @@ Doek.Canvas = function (containerId) {
 	// Storage
 	this.layers = {};
 	this._children = this.layers;
+	this.actions = new Doek.Collection();
 	
-	this.event = new Doek.Event(this);
+	this.event = new Doek.Event(this, this);
 	
 	// Over what node are we hovering?
 	this._hoverNode = false;
@@ -54,9 +55,20 @@ Doek.Canvas = function (containerId) {
 	// and let it inform its parents.
 	// So in stead of bubbling up, we look up and then let it bubble down
 	this.$container.click(function(e) {
+		
 		var p = new Doek.Position(that, e.offsetX, e.offsetY, 'abs');
         var node = that.findNode(p);
-        if (node) node.event.fireEvent('click');
+		
+		var payload = {position: p}
+		
+		if (this._action) {
+			
+			payload.node = node;
+			
+			this._action.event.fireEvent('click', this, payload);
+		}
+		
+        if (node) node.event.fireEvent('click', this, payload);
     });
     
 	this.$container.mouseout(function(e) {
@@ -139,12 +151,29 @@ Doek.Canvas.prototype.setMode = function (modename) {
 Doek.Canvas.prototype.setAction = function (actionname) {
 	
 	var prevAction = this._action;
-	this._action = actionname;
+	this._action = this.actions.getByName(actionname);
 	
-	if (prevAction != actionname) {
-		this.event.fireEvent('actionchange', this, {oldaction: prevAction, newaction: actionname, mode: this._mode})
+	if (prevAction != this._action) {
+		
+		// Inform the canvas and children the action has changed
+		this.event.fireEvent('actionchange', this, {oldaction: prevAction, newaction: this._action, mode: this._mode})
+		
+		// Inform the previous action it has ended
+		if (prevAction) prevAction.event.fireEvent('actionend', this, {newaction: this._action, mode: this._mode})
 	}
 	
+}
+
+/**
+ * @param	{Doek.Action}	action
+ * @returns	{integer}
+ */
+Doek.Canvas.prototype.registerAction = function (action) {
+	
+	action.canvas = this;
+	action.event.canvas = this;
+	
+	return this.actions.push(action);
 }
 
 Doek.Canvas.prototype.resetMode = function() {

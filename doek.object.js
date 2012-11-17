@@ -13,7 +13,7 @@ Doek.Object = function(parentLayer) {
 	
 	this.drawn = false;
 	this.clickable = true;
-	this.event = new Doek.Event(this);
+	this.event = new Doek.Event(this, this.parentLayer.parentCanvas);
 	
 	this.x = 0;
 	this.y = 0;
@@ -58,12 +58,37 @@ Doek.Object.prototype.addNode = function (instruction) {
 	var newNode = new Doek.Node(instruction, this);
 	var index = this.nodes.push(newNode);
 	
-	if (this.x > newNode.x) this.x = newNode.x;
-	if (this.y > newNode.y) this.y = newNode.y;
-	if (this.dx < newNode.dx) this.dx = newNode.dx;
-	if (this.dy < newNode.dy) this.dy = newNode.dy;
+	this.calculate();
 	
 	return newNode;
+}
+
+/**
+ * Calculate object dimensions
+ */
+Doek.Object.prototype.calculate = function () {
+	
+	this.x = false;
+	this.y = false;
+	this.dx = false;
+	this.dy = false;
+	
+	for (var index in this.nodes.storage) {
+		
+		var node = this.nodes.storage[index];
+		
+		// This needs a lot of improvement for negative coordinates
+		if (this.x > node.position.absX || this.x === false) this.x = node.position.absX;
+		if (this.y > node.position.absY || this.y === false) this.y = node.position.absY;
+		
+		var dx = node.position.absX + node.width;
+		var dy = node.position.absY + node.height;
+		
+		if (this.dx < dx || this.dx === false) this.dx = dx;
+		if (this.dy < dy || this.dy === false) this.dy = dy;
+		
+	}
+	
 }
 
 /**

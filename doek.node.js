@@ -21,7 +21,7 @@ Doek.Node = function(instructions, parentObject) {
 	this.parentObject = parentObject;
 	this._parent = parentObject;
 	
-	this.event = new Doek.Event(this);
+	this.event = new Doek.Event(this, this.parentObject.parentLayer.parentCanvas);
 	
 	this.drawn = false;		// Is it drawn on the parent?
 	this._idrawn = {};		// Is it drawn internally?
@@ -108,6 +108,9 @@ Doek.Node.prototype.calculate = function() {
 		
 		this.position = new Doek.Position(this.parentObject.parentLayer.parentCanvas, sx, sy, 'abs');
 	}
+	
+	// Recalculate the parent, too
+	this.parentObject.calculate();
 }
 
 /**

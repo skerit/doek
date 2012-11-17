@@ -34,7 +34,7 @@ Doek.Layer = function (name, zindex, canvas) {
 	
 	this.ctx = this.element.getContext('2d');
 	
-	this.event = new Doek.Event(this);
+	this.event = new Doek.Event(this, this.parentCanvas);
 	
 	// Add our own events
 	this.event.addEvent('requestRedraw', function(caller){

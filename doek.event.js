@@ -1,7 +1,14 @@
-Doek.Event = function(owner) {
+Doek.Event = function(owner, canvas) {
 	
 	this.owner = owner;
+	this.canvas = canvas;
 	this.events = [];
+	
+	// A generated id
+	this.id = Math.random().toString(36).substring(7);
+	
+	// The event count
+	this.count = 0;
 	
 	/**
 	 * The direction of the event
@@ -44,9 +51,10 @@ Doek.Event.prototype.addEvent = function(eventType, endFunction) {
  */
 Doek.Event.prototype.fireEvent = function (eventType, caller, payload) {
 	
+	// Do the event first. It'll possibly modify the payload
 	var done = this.doEvent(eventType, caller, payload);
 	
-	if (done !== 'endbubble' && done !== 'endall') this.bubbleEvent(eventType);
+	if (done !== 'endbubble' && done !== 'endall') this.bubbleEvent(eventType, payload);
 }
 
 /**
@@ -56,6 +64,36 @@ Doek.Event.prototype.fireEvent = function (eventType, caller, payload) {
  * @param	{object}	caller		Where the event came from (direct parent or child)
  */
 Doek.Event.prototype.doEvent = function(eventType, caller, payload) {
+	
+	if (payload === undefined) payload = {};
+	
+	var newOrigin = false;
+	
+	// It's the first time, add origin data
+	if (payload.origin === undefined) {
+		newOrigin = true;
+	} else {
+		if (payload.origin.type != eventType) newOrigin = true;
+	}
+	
+	if (newOrigin) {
+		
+		payload.origin = {
+			type: eventType,
+			caller: caller
+			};
+			
+		payload.eventid = false;
+	}
+	
+	if (payload.eventid === undefined || !payload.eventid) {
+		this.count++;
+		payload.eventid = this.id + '-' + this.count;
+	}
+	
+	if (payload.origin.callstack === undefined) payload.origin.callstack = [];
+	
+	payload.origin.callstack.push(caller);
 
 	eventType = eventType.toLowerCase();
 	var returnval = '';
@@ -82,7 +120,7 @@ Doek.Event.prototype.doEvent = function(eventType, caller, payload) {
 /**
  * Start the event chain, but do not execute the events on this one
  */
-Doek.Event.prototype.bubbleEvent = function(eventType) {
+Doek.Event.prototype.bubbleEvent = function(eventType, payload) {
 	
 	eventType = eventType.toLowerCase();
 	
@@ -93,10 +131,10 @@ Doek.Event.prototype.bubbleEvent = function(eventType) {
 	// Inform children of the event if direction is up
 	if (direction == 'up' && this.owner._children !== undefined) {
 		for (var key in this.owner._children.storage) {
-			this.owner._children.storage[key].event.fireEvent(eventType, this.owner);
+			this.owner._children.storage[key].event.fireEvent(eventType, this.owner, payload);
 		}
 	} else if (direction == 'down' && this.owner._parent !== undefined) {
 		
-		this.owner._parent.event.fireEvent(eventType, this.owner);
+		this.owner._parent.event.fireEvent(eventType, this.owner, payload);
 	}
 }
