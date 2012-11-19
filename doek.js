@@ -56,9 +56,7 @@ Doek.Collection.prototype.push = function (obj) {
 	var overrideId = false;
 	
 	if (obj._DCT !== undefined) {
-		if (obj._DCT == 'pushPair') {
-			if (obj.id !== undefined) overrideId = true;
-		}
+		if (obj.id !== undefined) overrideId = true;
 	}
 	
 	if (overrideId) {
