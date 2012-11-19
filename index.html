@@ -53,22 +53,40 @@
             });
             
             var layer = d.addLayer('main', 5);
-            var obj = new Doek.Object(layer);
-            
-            var style = new Doek.Style('ori');
-            style.properties.strokeStyle = '#DD0000';
-            
-            var mynode = obj.addLine(150, 60, 20, 300, style);
-            layer.addObject(obj);
             
             d.setMode('edit');
-            d.setAction('drawline');
             
-            d.event.addEvent('mousemove', function (caller, payload) {
-                var pos = payload.position;
-                mynode.setEndpoint(pos);
+            // Create a new action
+            var addLine = new Doek.Action('addLine');
+            addLine.storage.layer = layer;
+            
+            addLine.event.addEvent('init', function (caller, payload) {
                 
             });
+            
+            addLine.event.addEvent('mouseupFirst', function(caller, payload) {
+
+                this.storage.object = new Doek.Object(this.storage.layer);
+                
+                var style = new Doek.Style('ori');
+                style.properties.strokeStyle = '#DD0000';
+                
+                var p = payload.startposition;
+                
+                var myline = this.storage.object.addLine(p.absX, p.absY, p.absX, p.absY, style);
+                
+                this.storage.line = myline;
+                this.storage.layer.addObject(this.storage.object); 
+            });
+            
+            addLine.event.addEvent('mousemoveFirstClick', function (caller, payload) {
+                var pos = payload.position;
+                this.storage.line.setEndpoint(pos);
+            });
+            
+            d.registerAction(addLine);
+            d.setAction('addLine');
+            
         </script>
     </body>
 </html>

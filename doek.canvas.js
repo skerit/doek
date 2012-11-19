@@ -2,6 +2,7 @@
 Doek.Canvas = function (containerId) {
 	
 	var that = this;
+	var thisCanvas = this;
 	
 	// Get the DOM element
 	this.container = document.getElementById(containerId);
@@ -56,73 +57,91 @@ Doek.Canvas = function (containerId) {
 	// So in stead of bubbling up, we look up and then let it bubble down
 	this.$container.click(function(e) {
 		
-		var p = new Doek.Position(that, e.offsetX, e.offsetY, 'abs');
-        var node = that.findNode(p);
+		var p = new Doek.Position(thisCanvas, e.offsetX, e.offsetY, 'abs');
+        var node = thisCanvas.findNode(p);
 		
 		var payload = {position: p}
-		
-		if (this._action) {
+
+		// If an action is activated, let it handle the click
+		if (thisCanvas._action) {
 			
 			payload.node = node;
+			thisCanvas._action.event.fireEvent('click', thisCanvas, payload);
 			
-			this._action.event.fireEvent('click', this, payload);
+		} else {
+			
+			// If no action is activated, send the click to the node
+			if (node) node.event.fireEvent('click', thisCanvas, payload);
 		}
-		
-        if (node) node.event.fireEvent('click', this, payload);
     });
     
 	this.$container.mouseout(function(e) {
 		// We've left the canvas, mouse out out of everything
-		that.applyNodeMouse(false);
+		thisCanvas.applyNodeMouse(false);
     });
     
     this.$container.mousemove(function(e) {
 		
-        var p = new Doek.Position(that, e.offsetX, e.offsetY, 'abs');
-        var node = that.findNode(p);
+        var p = new Doek.Position(thisCanvas, e.offsetX, e.offsetY, 'abs');
+        var node = thisCanvas.findNode(p);
 		
 		var payload = {position: p}
 		
-		that.applyNodeMouse(node, payload);
+		thisCanvas.applyNodeMouse(node, payload);
 		
-		that.event.fireEvent('mousemove', this, payload);
+		// Also send the mousemove event to the canvas
+		thisCanvas.event.fireEvent('mousemove', this, payload);
 		
     });
 	
 	this.$container.mousedown(function(e) {
-        var p = new Doek.Position(that, e.offsetX, e.offsetY, 'abs');
-        var node = that.findNode(p);
+        var p = new Doek.Position(thisCanvas, e.offsetX, e.offsetY, 'abs');
+        var node = thisCanvas.findNode(p);
 		
-		this._clickNode = node;
-		this._clicking = true;
+		thisCanvas._clickNode = node;
+		thisCanvas._clicking = true;
 		
 		var payload = {startposition: p}
-		this._startPosition = p;
+		thisCanvas._startPosition = p;
 		
-		if (node) node.event.fireEvent('mousedown', that, payload);
+		// If an action is activated, let it handle the mousedown
+		if (thisCanvas._action) {
+			payload.node = node;
+			thisCanvas._action.event.fireEvent('mousedown', thisCanvas, payload);
+		} else {
+			// If no action is activated, send the mousedown to the node
+			if (node) node.event.fireEvent('mousedown', thisCanvas, payload);
+		}
 		
-		that.event.fireEvent('mousedown', this);
+		thisCanvas.event.fireEvent('mousedown', thisCanvas);
     });
 	
 	this.$container.mouseup(function(e) {
-        var p = new Doek.Position(that, e.offsetX, e.offsetY, 'abs');
-        var node = that.findNode(p);
+        var p = new Doek.Position(thisCanvas, e.offsetX, e.offsetY, 'abs');
+        var node = thisCanvas.findNode(p);
 		
 		var payload = {
-			startposition: this._startPosition,
-			originnode: this._clickNode
+			startposition: thisCanvas._startPosition,
+			originnode: thisCanvas._clickNode
 		}
 		
-		this._startPosition = false;
-		this._clickNode = false;
-		this._clicking = false;
+		thisCanvas._startPosition = false;
+		thisCanvas._clickNode = false;
+		thisCanvas._clicking = false;
 		
 		// right now, just select the target node
-		this._selectedNode = node;
+		thisCanvas._selectedNode = node;
 		
-		if (node) node.event.fireEvent('mouseup', that, payload);
+		// If an action is activated, let it handle the mouseup
+		if (thisCanvas._action) {
+			payload.node = node;
+			thisCanvas._action.event.fireEvent('mouseup', thisCanvas, payload);
+		} else {
+			// If no action is activated, send the mouseup to the node
+			if (node) node.event.fireEvent('mouseup', thisCanvas, payload);
+		}
 		
-		that.event.fireEvent('mouseup', this);
+		thisCanvas.event.fireEvent('mouseup', thisCanvas);
 		
     });
 	
@@ -160,7 +179,12 @@ Doek.Canvas.prototype.setAction = function (actionname) {
 		
 		// Inform the previous action it has ended
 		if (prevAction) prevAction.event.fireEvent('actionend', this, {newaction: this._action, mode: this._mode})
+	} else {
+		// If it is the same action, do a reset
+		if (this._action) this._action.event.fireEvent('requestReset', this);
 	}
+	
+	if (this._action) this._action.event.fireEvent('init', this);
 	
 }
 
@@ -181,38 +205,71 @@ Doek.Canvas.prototype.resetMode = function() {
 }
 
 /**
+ * Send the correct events to the nodes we're mousing over
  * @param	{Doek.Node}	newNode
  */
 Doek.Canvas.prototype.applyNodeMouse = function (newNode, payload) {
+	
+	if (payload === undefined) payload = {}
 	
 	// Get the previous node
 	var prevNode = this._hoverNode;
 	
 	var notifyObject = false;
 	
-	// We're hovering over a different node as the last one
-	if (newNode != prevNode) {
+	// If an action is activated, let it handle the click
+	if (this._action) {
 		
-		// There was a previous node
-		if (prevNode) {
-			prevNode.event.fireEvent('mouseout', this, payload);
+		payload.node = newNode;
+		payload.prevNode = prevNode;
 		
-			// If the objects also differ, inform them too	
-			if (newNode.parentObject != prevNode.parentObject) {
-				prevNode.parentObject.event.fireEvent('mouseout', this, payload);
+		// We're hovering over a different node as the last one
+		if (newNode != prevNode) {
+			
+			// There was a previous node
+			if (prevNode) {
+				this._action.event.fireEvent('mouseout', this, payload);
+			} else {
+				// @todo: This should be sent to the object, but the action doesn't know that
+				if (newNode) this._action.event.fireEvent('mouseenter', this, payload);
 			}
-		} else {
-			if (newNode) newNode.parentObject.event.fireEvent('mouseenter', this, payload);
+			
+			// @todo: This will receive the same info as above
+			if (newNode) this._action.event.fireEvent('mouseenter', this, payload);
 		}
 		
-		if (newNode) newNode.event.fireEvent('mouseenter', this, payload);
+		// Set the newly found node (or false) as the hovernode
+		this._hoverNode = newNode;
+	
+		this._action.event.fireEvent('mousemove', this, payload);
+		
+	} else {
+	
+		// We're hovering over a different node as the last one
+		if (newNode != prevNode) {
+			
+			// There was a previous node
+			if (prevNode) {
+				prevNode.event.fireEvent('mouseout', this, payload);
+			
+				// If the objects also differ, inform them too	
+				if (newNode.parentObject != prevNode.parentObject) {
+					prevNode.parentObject.event.fireEvent('mouseout', this, payload);
+				}
+			} else {
+				if (newNode) newNode.parentObject.event.fireEvent('mouseenter', this, payload);
+			}
+			
+			if (newNode) newNode.event.fireEvent('mouseenter', this, payload);
+		}
+		
+		// Set the newly found node (or false) as the hovernode
+		this._hoverNode = newNode;
+	
+		if (newNode) newNode.event.fireEvent('mousemove', this, payload);
 		
 	}
 	
-	// Set the newly found node (or false) as the hovernode
-	this._hoverNode = newNode;
-
-	if (newNode) newNode.event.fireEvent('mousemove', this, payload);
 }
 
 /**
@@ -265,6 +322,8 @@ Doek.Canvas.prototype.addGrid = function (tileSize) {
 	if (tileSize === undefined) tileSize = this.settings.tileSize;
 	
 	var layer = this.addLayer('mainGrid', 10);
+	
+	layer.clickable = false;
 	
 	var gridObject = new Doek.Object(layer);
 	

@@ -63,7 +63,7 @@ Doek.Collection.prototype.push = function (obj) {
 	obj._collectionIndex = this.index;
 	
 	// If the object has a name, store it in the named obj too
-	if (obj.name !== undefined) this._named[obj.name] = obj;
+	if (obj.name !== undefined) this._named[obj.name.toLowerCase()] = obj;
 	
 	// Set the obj remove function
 	obj._remove = function(id) {return function(){thisCollection.remove(id)}}(this.index);
@@ -78,6 +78,9 @@ Doek.Collection.prototype.push = function (obj) {
  */
 Doek.Collection.prototype.getByName = function (name) {
 	
+	// Make it case insensitive
+	name = name.toLowerCase();
+
 	if (this._named[name] !== undefined) return this._named[name];
 	else return false;
 	
@@ -92,7 +95,7 @@ Doek.Collection.prototype.remove = function (index) {
 		
 		// Don't forget to remove it from the named object as well, otherwise it'll keep existing
 		if (this.storage[index].name) {
-			var name = this.storage[index].name;
+			var name = this.storage[index].name.toLowerCase();
 			delete this._named[name];
 		}
 		
