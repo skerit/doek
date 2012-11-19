@@ -52,24 +52,81 @@ Doek.Collection.prototype.push = function (obj) {
 	
 	var thisCollection = this;
 	
-	// Increase the counter by one
-	this.index++;
-	this.length++;
+	var useId = 0;
+	var overrideId = false;
+	
+	if (obj._DCT !== undefined) {
+		if (obj._DCT == 'pushPair') {
+			if (obj.id !== undefined) overrideId = true;
+		}
+	}
+	
+	if (overrideId) {
+		useId = obj.id;
+	} else {
+		// Increase the counter by one
+		this.index++;
+		this.length++;
+		useId = this.index;
+	}
+	
+	// Remove the previous value if the id already exists
+	if (this.storage[useId] !== undefined) this.storage[useId]._remove();
 	
 	// Add the object to the storage container
-	this.storage[this.index] = obj;
+	this.storage[useId] = obj;
 	
 	// Set the index in the obj
-	obj._collectionIndex = this.index;
+	obj._collectionIndex = useId;
 	
 	// If the object has a name, store it in the named obj too
 	if (obj.name !== undefined) this._named[obj.name.toLowerCase()] = obj;
 	
 	// Set the obj remove function
-	obj._remove = function(id) {return function(){thisCollection.remove(id)}}(this.index);
+	obj._remove = function(id) {return function(){thisCollection.remove(id)}}(useId);
 	
 	// Return the id
-	return this.index;
+	return useId;
+}
+
+/**
+ * Add a value pair as an object
+ * @param	{string}	name		The name of the value
+ * @param	{any}		value		Any value
+ * @param	{id}		id			Optional numeric id to overwrite
+ */
+Doek.Collection.prototype.pushPair = function (name, value, id) {
+	
+	var obj = {name: name, value: value, _DCT: 'pushPair'}
+	
+	if (id !== undefined) obj.id = id;
+	
+	return this.push(obj);
+}
+
+/**
+ * Get something either by its numeric id or string
+ */
+Doek.Collection.prototype.get = function (identifier) {
+	
+	// getByName if it's a string
+	if (isNaN(identifier)) {
+		return this.getByName(identifier);
+	} else {
+		return this.getById(identifier);
+	}
+	
+}
+
+/**
+ * Get an object by its id
+ * @returns	{object}
+ */
+Doek.Collection.prototype.getById = function (id) {
+
+	if (this.storage[id] !== undefined) return this.storage[id];
+	else return false;
+	
 }
 
 /**
