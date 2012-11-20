@@ -2,6 +2,7 @@
     
     <head>
         <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+        <script src="jquery.mousewheel.js"></script>
         <script src="doek.js"></script>
         <script src="doek.canvas.js"></script>
         <script src="doek.layer.js"></script>
@@ -20,6 +21,9 @@
             var d = new Doek.Canvas('world');
             var gridObject = d.addGrid();
             
+            // Enable tiled
+            d.settings.tiled = true;
+
             var hoverStyle = new Doek.Style('hover');
             hoverStyle.properties.strokeStyle = '#EE3030';
             gridObject.addStyle(hoverStyle);
@@ -80,6 +84,7 @@
             });
             
             addLine.event.addEvent('mousemoveFirstClick', function (caller, payload) {
+                
                 var pos = payload.position;
                 this.storage.line.setEndpoint(pos);
             });

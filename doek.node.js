@@ -106,7 +106,7 @@ Doek.Node.prototype.calculate = function() {
 			sy = sy - this.height;
 		}
 		
-		this.position = new Doek.Position(this.parentObject.parentLayer.parentCanvas, sx, sy, 'abs');
+		this.position = new Doek.Position(this.parentObject.parentLayer.parentCanvas, sx, sy, 'map');
 	}
 	
 	// Recalculate the parent, too
@@ -117,6 +117,9 @@ Doek.Node.prototype.calculate = function() {
  * Draw the node with the active style
  */
 Doek.Node.prototype.draw = function() {
+	
+	// Recalculate
+	this.calculate();
 	
 	// Create the internally drawn cache var for this version
 	if (this._idrawn[this.activeStyle.name] === undefined) {
@@ -192,8 +195,8 @@ Doek.Node.prototype.setEndpoint = function(endposition) {
 	
 	if (this.type == 'line') {
 		
-		this.instructions.dx = endposition.absX;
-		this.instructions.dy = endposition.absY;
+		this.instructions.dx = endposition.mapX;
+		this.instructions.dy = endposition.mapY;
 		
 	}
 	

@@ -23,8 +23,19 @@ Doek.Canvas = function (containerId) {
 	this.$container.css('position', 'relative');
 	
 	this.settings = {
-		tiled: true,
-		tileSize: 10
+		tiled: false,
+		tileSize: 10,
+		scrollMap: true,
+		scrollSimulateMouseMove: true
+	}
+	
+	// Some state variables
+	this.state = {}
+	
+	// The upper left position on the map
+	this.position = {
+		x: 0,
+		y: 0
 	}
 	
 	// Storage
@@ -76,21 +87,18 @@ Doek.Canvas = function (containerId) {
     });
     
 	this.$container.mouseout(function(e) {
+		
+		var p = new Doek.Position(thisCanvas, e.offsetX, e.offsetY, 'abs');
+		var payload = {position: p}
+		
 		// We've left the canvas, mouse out out of everything
-		thisCanvas.applyNodeMouse(false);
+		thisCanvas.applyNodeMouse(false, payload);
     });
     
     this.$container.mousemove(function(e) {
 		
         var p = new Doek.Position(thisCanvas, e.offsetX, e.offsetY, 'abs');
-        var node = thisCanvas.findNode(p);
-		
-		var payload = {position: p}
-		
-		thisCanvas.applyNodeMouse(node, payload);
-		
-		// Also send the mousemove event to the canvas
-		thisCanvas.event.fireEvent('mousemove', this, payload);
+        thisCanvas._triggerMousemove(p);
 		
     });
 	
@@ -141,9 +149,74 @@ Doek.Canvas = function (containerId) {
 			if (node) node.event.fireEvent('mouseup', thisCanvas, payload);
 		}
 		
-		thisCanvas.event.fireEvent('mouseup', thisCanvas);
+		thisCanvas.event.fireEvent('mouseup', thisCanvas, payload);
 		
     });
+	
+	this.$container.mousewheel(function(e, delta, deltaX, deltaY) {
+		
+		var p = new Doek.Position(thisCanvas, e.offsetX, e.offsetY, 'abs');
+		var payload = {position: p}
+		var node = this._hoverNode;
+		
+		var dir = false;
+		
+		if (deltaX == -1) {
+			dir = 'left';
+		} else if (deltaX == 1) {
+			dir = 'right';
+		} else if (deltaY == -1) {
+			dir = 'down';
+		} else if (deltaY == 1) {
+			dir = 'up';
+		}
+		
+		if (node) {
+			node.event.fireEvent('scroll' + dir, thisCanvas, payload);
+			node.event.fireEvent('scrollany', thisCanvas, payload);
+		}
+		
+		thisCanvas.event.fireEvent('scroll' + dir, thisCanvas, payload);
+		thisCanvas.event.fireEvent('scrollany', thisCanvas, payload);
+		
+	});
+	
+	// Listen to our own custom events
+	this.event.addEvent('scrollany', function(caller, payload){
+		// Simulate a mousemove
+		if (this.settings.scrollSimulateMouseMove) {
+			this._triggerMousemove(payload.position);
+		}
+		
+	});
+	
+	this.event.addEvent('scrollup', function(caller, payload){
+		if (this.settings.scrollMap) {
+			d.position.y++;
+			d.redraw();
+		}
+	});
+    
+	this.event.addEvent('scrollright', function(caller, payload){
+		if (this.settings.scrollMap) {
+			d.position.x--;
+			d.redraw();
+		}
+	});
+	
+	this.event.addEvent('scrolldown', function(caller, payload){
+		if (this.settings.scrollMap) {
+			d.position.y--;
+			d.redraw();
+		}
+	});
+            
+	this.event.addEvent('scrollleft', function(caller, payload){
+		if (this.settings.scrollMap) {
+			d.position.x++;
+			d.redraw();
+		}
+	});
 	
 }
 
@@ -162,6 +235,21 @@ Doek.Canvas.prototype.setMode = function (modename) {
 		this.event.fireEvent('modechange', this, {oldmode: prevMode, oldaction: prevAction, newmode: modename, newaction: false})
 	}
 	
+}
+
+Doek.Canvas.prototype._triggerMousemove = function(p) {
+	
+	var node = this.findNode(p);
+	var payload = {position: p}
+	
+	this.applyNodeMouse(node, payload);
+	
+	// Also send the mousemove event to the canvas
+	this.event.fireEvent('mousemove', this, payload);
+}
+
+Doek.Canvas.prototype.redraw = function () {
+	this.event.fireEvent('redraw', this);
 }
 
 /**

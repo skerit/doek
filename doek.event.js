@@ -123,15 +123,17 @@ Doek.Event.prototype.doEvent = function(eventType, caller, payload) {
 Doek.Event.prototype.bubbleEvent = function(eventType, payload) {
 	
 	eventType = eventType.toLowerCase();
-	
 	var direction = false;
-	
 	if (this.directions[eventType] !== undefined) direction = this.directions[eventType];
 	
 	// Inform children of the event if direction is up
 	if (direction == 'up' && this.owner._children !== undefined) {
-		for (var key in this.owner._children.storage) {
-			this.owner._children.storage[key].event.fireEvent(eventType, this.owner, payload);
+		
+		if (this.owner._children.storage !== undefined) var children = this.owner._children.storage;
+		else var children = this.owner._children;
+		
+		for (var key in children) {
+			children[key].event.fireEvent(eventType, this.owner, payload);
 		}
 	} else if (direction == 'down' && this.owner._parent !== undefined) {
 		

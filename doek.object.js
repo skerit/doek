@@ -78,11 +78,11 @@ Doek.Object.prototype.calculate = function () {
 		var node = this.nodes.storage[index];
 		
 		// This needs a lot of improvement for negative coordinates
-		if (this.x > node.position.absX || this.x === false) this.x = node.position.absX;
-		if (this.y > node.position.absY || this.y === false) this.y = node.position.absY;
+		if (this.x > node.position.mapX || this.x === false) this.x = node.position.mapX;
+		if (this.y > node.position.mapY || this.y === false) this.y = node.position.mapY;
 		
-		var dx = node.position.absX + node.width;
-		var dy = node.position.absY + node.height;
+		var dx = node.position.mapX + node.width;
+		var dy = node.position.mapY + node.height;
 		
 		if (this.dx < dx || this.dx === false) this.dx = dx;
 		if (this.dy < dy || this.dy === false) this.dy = dy;

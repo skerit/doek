@@ -2,34 +2,66 @@ var Doek = {}
 
 /**
  * A position object
- * @param	{Doek.Canvas}	canvas
- * @param	{integer}		x
- * @param	{integer}		y
- * @param	{string}		type
+ * @param	{Doek.Canvas}	canvas		The capturing element
+ * @param	{integer}		x			The X position
+ * @param	{integer}		y			The Y position
+ * @param	{string}		type		The type of position given (abs, map, canvas, ...)
  */
 Doek.Position = function(canvas, x, y, type) {
 	
 	if (type === undefined) type = 'abs';
 	
+	// Get tiled settings
+	var tiled = canvas.settings.tiled;
 	var size = canvas.settings.tileSize;
 	
-	this.absX = x;
-	this.absY = y;
+	this.tiled = {
+		mapX: false,
+		mapY: false,
+		canvasX: false,
+		canvasY: false
+	}
 	
-    this.canvasX = this.absX;
-    this.canvasY = this.absY;
+	// Get starting positions
+	this.rx = canvas.position.x;
+	this.ry = canvas.position.y;
 	
-	// fix for map coordinates
-	this.mapX = this.canvasX;
-	this.mapY = this.canvasY;
+	this.absX = false;
+	this.absY = false;
 	
-	// Fix for tiled info
-	this.tiledCanvasX = ~~(this.absX / size);
-    this.tiledCanvasY = ~~(this.absY / size);
+	this.mapX = false;
+	this.mapY = false;
+	
+	switch (type) {
+		
+		case 'abs':
+			this.absX = x;
+			this.absY = y;
+			
+			this.mapX = x - this.rx;
+			this.mapY = y - this.ry;
+			break;
+		
+		case 'map':
+			this.absX = x + this.rx;
+			this.absY = y + this.ry;
+			
+			this.mapX = x;
+			this.mapY = y;
+			break;
+	}
+
+	if (tiled) {
+		this.tiled.canvasX = ~~(this.absX / size);
+		this.tiled.canvasY = ~~(this.absY / size);
+		
+		this.tiled.mapX = ~~(this.mapX / size);
+		this.tiled.mapY = ~~(this.mapY / size);
+	}
 	
 }
 
-Doek.Position.prototype.help = function() {
+Doek.Position.prototype.helper = function() {
 	
 }
 
