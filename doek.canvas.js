@@ -63,6 +63,12 @@ Doek.Canvas = function (containerId) {
 	this._mode = 'normal';
 	this._action = false;
 	
+	this.button = {
+		left: {downCount: 0, upCount: 0, down: false, downPosition: false},
+		middle: {downCount: 0, upCount: 0, down: false, downPosition: false},
+		right: {downCount: 0, upCount: 0, down: false, downPosition: false}
+	}
+	
 	// Mouse events will be captured by the container
 	// We will look for the top node, send it the mouse event
 	// and let it inform its parents.
@@ -113,6 +119,10 @@ Doek.Canvas = function (containerId) {
 		else if (e.which == 2) button = 'middle';
 		else if (e.which == 3) button = 'right';
 		
+		thisCanvas.button[button].down = true;
+		thisCanvas.button[button].downPosition = p;
+		thisCanvas.button[button].downCount++;
+		
 		thisCanvas._clickNode = node;
 		thisCanvas._clicking = true;
 		
@@ -148,6 +158,9 @@ Doek.Canvas = function (containerId) {
 		else if (e.which == 2) button = 'middle';
 		else if (e.which == 3) button = 'right';
 		
+		thisCanvas.button[button].down = false;
+		thisCanvas.button[button].upCount++;
+		
 		var payload = {
 			startposition: thisCanvas._startPosition,
 			originnode: thisCanvas._clickNode,
@@ -171,6 +184,8 @@ Doek.Canvas = function (containerId) {
 		}
 		
 		thisCanvas.event.fireEvent('mouseup', thisCanvas, payload, [button]);
+		
+		thisCanvas.button[button].downPosition = false;
 		
     });
 	
@@ -207,29 +222,43 @@ Doek.Canvas = function (containerId) {
 	
 	this.event.addEvent('scrollup', function(caller, payload){
 		if (this.settings.scrollMap) {
-			d.position.y++;
-			d.redraw();
+			this.position.y++;
+			this.redraw();
 		}
 	});
     
 	this.event.addEvent('scrollright', function(caller, payload){
 		if (this.settings.scrollMap) {
-			d.position.x--;
-			d.redraw();
+			this.position.x--;
+			this.redraw();
 		}
 	});
 	
 	this.event.addEvent('scrolldown', function(caller, payload){
 		if (this.settings.scrollMap) {
-			d.position.y--;
-			d.redraw();
+			this.position.y--;
+			this.redraw();
 		}
 	});
             
 	this.event.addEvent('scrollleft', function(caller, payload){
 		if (this.settings.scrollMap) {
-			d.position.x++;
-			d.redraw();
+			this.position.x++;
+			this.redraw();
+		}
+	});
+	
+	this.event.addEvent('dragmiddle', function(caller, payload){
+		if (this.settings.scrollMap) {
+			var start = payload.dragstartposition;
+			var now = payload.position;
+			
+			var deltaX = start.absX - now.absX;
+			var deltaY = start.absY - now.absY;
+			
+			this.position.x = start.rx - deltaX;
+			this.position.y = start.ry - deltaY;
+			this.redraw();
 		}
 	});
 	
@@ -261,6 +290,23 @@ Doek.Canvas.prototype._triggerMousemove = function(p) {
 	
 	// Also send the mousemove event to the canvas
 	this.event.fireEvent('mousemove', this, payload);
+	
+	// And for every clicked button, there's a drag
+	if (this.button.left.down) {
+		payload.dragstartposition = this.button.left.downPosition;
+		this.event.fireEvent('dragleft', this, payload);
+	}
+	
+	if (this.button.middle.down) {
+		payload.dragstartposition = this.button.middle.downPosition;
+		this.event.fireEvent('dragmiddle', this, payload);
+	}
+	
+	if (this.button.right.down) {
+		payload.dragstartposition = this.button.right.downPosition;
+		this.event.fireEvent('dragright', this, payload);
+	}
+	
 }
 
 Doek.Canvas.prototype.redraw = function () {
