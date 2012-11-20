@@ -26,7 +26,8 @@ Doek.Canvas = function (containerId) {
 		tiled: false,
 		tileSize: 10,
 		scrollMap: true,
-		scrollSimulateMouseMove: true
+		scrollSimulateMouseMove: true,
+		noContextMenu: true
 	}
 	
 	// Some state variables
@@ -106,31 +107,51 @@ Doek.Canvas = function (containerId) {
         var p = new Doek.Position(thisCanvas, e.offsetX, e.offsetY, 'abs');
         var node = thisCanvas.findNode(p);
 		
+		var button = '';
+		
+		if (e.which == 1) button = 'left';
+		else if (e.which == 2) button = 'middle';
+		else if (e.which == 3) button = 'right';
+		
 		thisCanvas._clickNode = node;
 		thisCanvas._clicking = true;
 		
-		var payload = {startposition: p}
+		var payload = {startposition: p, button: button}
 		thisCanvas._startPosition = p;
 		
 		// If an action is activated, let it handle the mousedown
 		if (thisCanvas._action) {
 			payload.node = node;
-			thisCanvas._action.event.fireEvent('mousedown', thisCanvas, payload);
+			thisCanvas._action.event.fireEvent('mousedown', thisCanvas, payload, [button]);
 		} else {
 			// If no action is activated, send the mousedown to the node
-			if (node) node.event.fireEvent('mousedown', thisCanvas, payload);
+			if (node) node.event.fireEvent('mousedown', thisCanvas, payload, [button]);
 		}
 		
-		thisCanvas.event.fireEvent('mousedown', thisCanvas);
+		thisCanvas.event.fireEvent('mousedown', thisCanvas, payload, [button]);
+
     });
 	
+	// Prevent the contextmenu
+	this.$container.bind('contextmenu',function(e){
+		if (thisCanvas.settings.noContextMenu) e.preventDefault();
+	 });
+	
 	this.$container.mouseup(function(e) {
+		
         var p = new Doek.Position(thisCanvas, e.offsetX, e.offsetY, 'abs');
         var node = thisCanvas.findNode(p);
 		
+		var button = '';
+		
+		if (e.which == 1) button = 'left';
+		else if (e.which == 2) button = 'middle';
+		else if (e.which == 3) button = 'right';
+		
 		var payload = {
 			startposition: thisCanvas._startPosition,
-			originnode: thisCanvas._clickNode
+			originnode: thisCanvas._clickNode,
+			button: button
 		}
 		
 		thisCanvas._startPosition = false;
@@ -143,13 +164,13 @@ Doek.Canvas = function (containerId) {
 		// If an action is activated, let it handle the mouseup
 		if (thisCanvas._action) {
 			payload.node = node;
-			thisCanvas._action.event.fireEvent('mouseup', thisCanvas, payload);
+			thisCanvas._action.event.fireEvent('mouseup', thisCanvas, payload, [button]);
 		} else {
 			// If no action is activated, send the mouseup to the node
-			if (node) node.event.fireEvent('mouseup', thisCanvas, payload);
+			if (node) node.event.fireEvent('mouseup', thisCanvas, payload, [button]);
 		}
 		
-		thisCanvas.event.fireEvent('mouseup', thisCanvas, payload);
+		thisCanvas.event.fireEvent('mouseup', thisCanvas, payload, [button]);
 		
     });
 	
@@ -171,23 +192,17 @@ Doek.Canvas = function (containerId) {
 			dir = 'up';
 		}
 		
-		if (node) {
-			node.event.fireEvent('scroll' + dir, thisCanvas, payload);
-			node.event.fireEvent('scrollany', thisCanvas, payload);
-		}
-		
-		thisCanvas.event.fireEvent('scroll' + dir, thisCanvas, payload);
-		thisCanvas.event.fireEvent('scrollany', thisCanvas, payload);
+		if (node) node.event.fireEvent('scroll', thisCanvas, payload, [dir]);
+		thisCanvas.event.fireEvent('scroll', thisCanvas, payload, [dir]);
 		
 	});
 	
 	// Listen to our own custom events
-	this.event.addEvent('scrollany', function(caller, payload){
+	this.event.addEvent('scroll', function(caller, payload){
 		// Simulate a mousemove
 		if (this.settings.scrollSimulateMouseMove) {
 			this._triggerMousemove(payload.position);
 		}
-		
 	});
 	
 	this.event.addEvent('scrollup', function(caller, payload){

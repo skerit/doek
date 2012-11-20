@@ -48,13 +48,27 @@ Doek.Event.prototype.addEvent = function(eventType, endFunction) {
 
 /**
  * Execute & bubble the event
+ * @param	{string}	eventType		The name of the base event
+ * @param	{object}	caller			The caller of the event
+ * @param	{object}	payload			Data the event can use
+ * @param	{array}		modifiers		Additions to the base event to fire, too
  */
-Doek.Event.prototype.fireEvent = function (eventType, caller, payload) {
+Doek.Event.prototype.fireEvent = function (eventType, caller, payload, modifiers) {
 	
 	// Do the event first. It'll possibly modify the payload
 	var done = this.doEvent(eventType, caller, payload);
 	
-	if (done !== 'endbubble' && done !== 'endall') this.bubbleEvent(eventType, payload);
+	if (modifiers !== undefined) for (var i = 0; i < modifiers.length; i++) {
+		this.doEvent(eventType + modifiers[i], caller, payload);
+	}
+	
+	if (done !== 'endbubble' && done !== 'endall') {
+		this.bubbleEvent(eventType, payload);
+		
+		if (modifiers !== undefined) for (var i = 0; i < modifiers.length; i++) {
+			this.bubbleEvent(eventType + modifiers[i], payload);
+		}
+	}
 }
 
 /**
