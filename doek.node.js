@@ -33,9 +33,9 @@ Doek.Node = function(instructions, parentObject) {
 	/**
 	 * @type	{Doek.Position}
 	 */
-	this.position = {};
-	
-	this.styles = {};
+	this.position = {}
+	this.styles = {}
+	this._iloc = {}
 	
 	// Start copying styles
 	// Create a new ori style (the default style)
@@ -86,20 +86,27 @@ Doek.Node.prototype.calculate = function() {
 	
 	// Calculate the bounding box
 	if (this.type == 'line') {
-		
+
+		// Instructions are always map based
 		var sx = this.instructions.sx;
 		var sy = this.instructions.sy;
 		var dx = this.instructions.dx;
 		var dy = this.instructions.dy;
 		
+		var bp = new Doek.Position(this.canvas, sx, sy, 'map');
+		var ep = new Doek.Position(this.canvas, dx, dy, 'map');
+		
+		// Convert the map based instructions
 		if (this.parentObject.tiled) {
-			var bp = new Doek.Position(this.canvas, sx, sy, 'abs');
-			var ep = new Doek.Position(this.canvas, dx, dy, 'abs');
-			
 			sx = bp.tiled.sx;
 			sy = bp.tiled.sy;
 			dx = ep.tiled.dx;
 			dy = ep.tiled.dy;
+		} else {
+			sx = bp.absX;
+			sy = bp.absY;
+			dx = ep.absX;
+			dy = ep.absY;
 		}
 		
 		// The position on the parent relative to the sx
@@ -122,7 +129,8 @@ Doek.Node.prototype.calculate = function() {
 			sy = sy - this.height;
 		}
 		
-		this.position = new Doek.Position(this.canvas, sx, sy, 'map');
+		if (!this.parentObject.tiled) console.log(sx + ',' + sy);
+		this.position = new Doek.Position(this.canvas, sx, sy, 'abs');
 	}
 	
 	// Recalculate the parent, too
@@ -167,6 +175,27 @@ Doek.Node.prototype.draw = function() {
 
 }
 
+/**
+ * @param	{Doek.Position}		position
+ */
+Doek.Node.prototype.isInNode = function(position) {
+	
+	if (this.type == 'line') {
+		if (this.parentObject.tiled) {
+			
+			var bp = this._getInternalPosition(position.tiled.sx, position.tiled.sy);
+			var id = bp.x + '-' + bp.y;
+			if (this._iloc[id] !== undefined) return true;
+			
+		} else {
+			return true;
+		}
+	}
+	
+	return false;
+	
+}
+
 Doek.Node.prototype._idrawLineBlock = function () {
 	var t = this._idrawn[this.activeStyle.name];
 
@@ -176,13 +205,15 @@ Doek.Node.prototype._idrawLineBlock = function () {
 	t.element.setAttribute('width', this.width);
 	t.element.setAttribute('height', this.height);
 	
-	var drawnPos = {}
+	this._iloc = {}
 	
-	var begin = {x: this.instructions.sx, y: this.instructions.sy}
+	var bp = new Doek.Position(this.canvas, this.instructions.sx, this.instructions.sy, 'map');
+	var begin = {x: bp.tiled.sx, y: bp.tiled.sy}
 	
 	var ep = new Doek.Position(this.canvas, this.instructions.dx, this.instructions.dy, 'map');
 	
-	var end = {x: ep.tiled.dx, y: ep.tiled.dy}
+	// Decrease end positions by one, otherwise it'll take the neighbouring line into account aswell
+	var end = {x: ep.tiled.dx-1, y: ep.tiled.dy-1}
 	
 	var coordinates = Doek.getLineCoordinates(begin, end);
 	
@@ -190,9 +221,11 @@ Doek.Node.prototype._idrawLineBlock = function () {
 	
 	ctx.lineWidth = this.activeStyle.properties.lineWidth;
 	ctx.strokeStyle = this.activeStyle.properties.strokeStyle;
-	ctx.fillStyle = '#009900'; //this.activeStyle.properties.strokeStyle;
+	ctx.fillStyle = this.activeStyle.properties.strokeStyle;
 	
 	var size = this.canvas.settings.tileSize;
+	var id = '';
+	var count = 0;
 	
 	for (var key in coordinates) {
 		
@@ -201,7 +234,13 @@ Doek.Node.prototype._idrawLineBlock = function () {
 		
 		var bp = this._getInternalPosition(np.tiled.sx, np.tiled.sy);
 		
-		ctx.fillRect(bp.x,bp.y,size,size);
+		id = bp.x + '-' + bp.y;
+		
+		// Keep a record of what we've drawn already
+		if (this._iloc[id] === undefined) {
+			this._iloc[id] = true;
+			ctx.fillRect(bp.x,bp.y,size,size);
+		}
 		
 	}
 	
@@ -236,6 +275,9 @@ Doek.Node.prototype._idrawLine = function () {
 	this._idrawn[this.activeStyle.name]['drawn'] = true;
 }
 
+/**
+ * Convert external absolute positions to internal ones
+ */
 Doek.Node.prototype._getInternalPosition = function (x, y) {
 	
 	x = x - this.position.absX;

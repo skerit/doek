@@ -58,19 +58,31 @@ Doek.Position = function(canvas, x, y, type, fromTiled) {
 	}
 
 	if (tiled) {
+		
+		// Beware of using the tiled canvas coordinates
+		// They can be incorrect when the map is moved
+		// more or less pixels then a single block
 		this.tiled.canvasX = ~~(this.absX / size);
 		this.tiled.canvasY = ~~(this.absY / size);
 		
 		this.tiled.mapX = ~~(this.mapX / size);
 		this.tiled.mapY = ~~(this.mapY / size);
 		
+		// The leftover position of the map on the canvas
+		this.tiled.modx = this.rx % size;
+		this.tiled.mody = this.ry % size;
+		
+		var tx = ~~((this.absX - this.tiled.modx) / size);
+		var ty = ~~((this.absY - this.tiled.mody) / size);
+		
 		// The beginning of this position
-		this.tiled.sx = this.tiled.canvasX * size;
-		this.tiled.sy = this.tiled.canvasY * size;
+		this.tiled.sx = (tx * size) + this.tiled.modx;
+		this.tiled.sy = (ty * size) + this.tiled.mody;
 		
 		// The ending of this tiled position
-		this.tiled.dx = this.tiled.sx + size;
-		this.tiled.dy = this.tiled.sy + size;
+		this.tiled.dx = (this.tiled.sx + size) + this.tiled.modx;
+		this.tiled.dy = (this.tiled.sy + size) + this.tiled.mody;
+		
 	}
 	
 }

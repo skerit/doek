@@ -43,7 +43,7 @@ Doek.Object.prototype.findNode = function (position) {
 
 		if ((position.mapX >= node.position.mapX && position.mapX <= (node.position.mapX + node.width)) &&
 			(position.mapY >= node.position.mapY && position.mapY <= (node.position.mapY + node.height))) {
-			return node;
+			if (node.isInNode(position)) return node;
 		}
 	}
 	return false;

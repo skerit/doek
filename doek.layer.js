@@ -22,7 +22,7 @@ Doek.Layer = function (name, zindex, canvas) {
 	this.element.setAttribute('width', canvas.width);
 	this.element.setAttribute('height', canvas.height);
 	this.element.setAttribute('id', canvas.id + '-' + name);
-	this.element.style.zIndex = this.zindex;
+	this.element.style.zIndex = zindex;
 	
 	// Set some css stuff
 	$(this.element).css('position', 'absolute');

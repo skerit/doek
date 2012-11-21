@@ -46,9 +46,7 @@
                 this.applyStyle('ori');
             });
             
-            gridObject.event.addEvent('mousedown', function(caller, payload){
-                console.log(payload);
-            });
+            
             
             gridObject.event.addEvent('mouseup', function(callernode, payload){
                 if (payload.originnode != callernode) {
@@ -57,7 +55,9 @@
             });
             
             var layer = d.addLayer('main', 5);
-            
+            d.event.addEvent('mousedown', function(caller, payload){
+                console.log(payload);
+            });
             d.setMode('edit');
             
             // Create a new action
@@ -81,14 +81,33 @@
                 
                 var myline = this.storage.object.addLine(p.absX, p.absY, p.absX, p.absY, style);
                 
+                var hstyle = new Doek.Style('hover');
+                hstyle.properties.strokeStyle = '#009910';
+                this.storage.object.addStyle(hstyle);
+                
                 this.storage.line = myline;
-                this.storage.layer.addObject(this.storage.object); 
+                this.storage.layer.addObject(this.storage.object);
             });
             
             addLine.event.addEvent('mousemoveFirstClick', function (caller, payload) {
                 
                 var pos = payload.position;
                 this.storage.line.setEndpoint(pos);
+                
+                
+            });
+            
+            addLine.event.addEvent('mouseupn', function (caller, payload) {
+                
+                d.setMode('normal');
+               this.storage.line.event.addEvent('mousemove', function() {
+                   this.applyStyle('hover');
+                });
+               
+               this.storage.line.event.addEvent('mouseout', function() {
+                   this.applyStyle('ori');
+                });
+                
             });
             
             d.registerAction(addLine);
