@@ -6,14 +6,20 @@ var Doek = {}
  * @param	{integer}		x			The X position
  * @param	{integer}		y			The Y position
  * @param	{string}		type		The type of position given (abs, map, canvas, ...)
+ * @param	{boolean}		fromTiled
  */
-Doek.Position = function(canvas, x, y, type) {
+Doek.Position = function(canvas, x, y, type, fromTiled) {
 	
 	if (type === undefined) type = 'abs';
 	
 	// Get tiled settings
 	var tiled = canvas.settings.tiled;
 	var size = canvas.settings.tileSize;
+	
+	if (fromTiled) {
+		x = x * size;
+		y = y * size;
+	}
 	
 	this.tiled = {
 		mapX: false,
@@ -57,6 +63,14 @@ Doek.Position = function(canvas, x, y, type) {
 		
 		this.tiled.mapX = ~~(this.mapX / size);
 		this.tiled.mapY = ~~(this.mapY / size);
+		
+		// The beginning of this position
+		this.tiled.sx = this.tiled.canvasX * size;
+		this.tiled.sy = this.tiled.canvasY * size;
+		
+		// The ending of this tiled position
+		this.tiled.dx = this.tiled.sx + size;
+		this.tiled.dy = this.tiled.sy + size;
 	}
 	
 }
@@ -199,6 +213,7 @@ Doek.Style = function(stylename) {
 	this.properties = {};
 	this.properties.fillStyle = null;
 	this.properties.strokeStyle = null;
+	this.properties.lineWidth = 1;
 	
 }
 
@@ -232,4 +247,42 @@ Doek.deepCopy = function(obj) {
         retVal[key] = Doek.deepCopy(obj[key]);
     }
     return retVal;
+}
+
+/**
+ * Bresenham algorithm
+ */
+Doek.getLineCoordinates = function(begin, end){
+
+	var x0 = begin.x;
+	var y0 = begin.y;
+	var x1 = end.x;
+	var y1 = end.y;
+	
+	var dx = Math.abs(x1-x0);
+	var dy = Math.abs(y1-y0);
+	var sx = (x0 < x1) ? 1 : -1;
+	var sy = (y0 < y1) ? 1 : -1;
+	var err = dx-dy;
+	
+	var coordinates = [];
+	
+	while(true){
+	
+	  // Do what you need to for this
+	  coordinates.push({x: x0, y: y0});
+	
+	  if ((x0==x1) && (y0==y1)) break;
+	  var e2 = 2*err;
+	  if (e2>-dy){
+		err -= dy;
+		x0  += sx;
+	  }
+	  if (e2 < dx){
+		err += dx;
+		y0  += sy;
+	  }
+	}
+	
+	return coordinates;
 }

@@ -14,6 +14,7 @@ Doek.Object = function(parentLayer) {
 	this.drawn = false;
 	this.clickable = true;
 	this.event = new Doek.Event(this, this.parentLayer.parentCanvas);
+	this.tiled = false;
 	
 	this.x = 0;
 	this.y = 0;

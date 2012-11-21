@@ -71,9 +71,11 @@
             addLine.event.addEvent('mouseupFirst', function(caller, payload) {
 
                 this.storage.object = new Doek.Object(this.storage.layer);
+                this.storage.object.tiled = true;
                 
                 var style = new Doek.Style('ori');
                 style.properties.strokeStyle = '#DD0000';
+                style.properties.lineWidth = 1;
                 
                 var p = payload.startposition;
                 

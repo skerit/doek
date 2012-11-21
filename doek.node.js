@@ -20,6 +20,7 @@ Doek.Node = function(instructions, parentObject) {
 	 */
 	this.parentObject = parentObject;
 	this._parent = parentObject;
+	this.canvas = this.parentObject.parentLayer.parentCanvas;
 	
 	this.event = new Doek.Event(this, this.parentObject.parentLayer.parentCanvas);
 	
@@ -91,22 +92,37 @@ Doek.Node.prototype.calculate = function() {
 		var dx = this.instructions.dx;
 		var dy = this.instructions.dy;
 		
+		if (this.parentObject.tiled) {
+			var bp = new Doek.Position(this.canvas, sx, sy, 'abs');
+			var ep = new Doek.Position(this.canvas, dx, dy, 'abs');
+			
+			sx = bp.tiled.sx;
+			sy = bp.tiled.sy;
+			dx = ep.tiled.dx;
+			dy = ep.tiled.dy;
+		}
+		
 		// The position on the parent relative to the sx
-		var pw = this.instructions.sx - this.instructions.dx;
-		var ph = this.instructions.sy - this.instructions.dy;
+		var pw = sx - dx;
+		var ph = sy - dy;
 		
-		this.width = 3 + Math.abs(pw);
-		this.height = 3 + Math.abs(ph);
+		this.width = 1 + Math.abs(pw);
+		this.height = 1 + Math.abs(ph);
+
+		if (this.parentObject.tiled) {
+			this.width += this.canvas.settings.tileSize;
+			this.height += this.canvas.settings.tileSize;
+		}
 		
-		if (this.instructions.dx < this.instructions.sx) {
+		if (dx < sx) {
 			sx = sx - this.width;
 		}
 		
-		if (this.instructions.dy < this.instructions.sy) {
+		if (dy < sy) {
 			sy = sy - this.height;
 		}
 		
-		this.position = new Doek.Position(this.parentObject.parentLayer.parentCanvas, sx, sy, 'map');
+		this.position = new Doek.Position(this.canvas, sx, sy, 'map');
 	}
 	
 	// Recalculate the parent, too
@@ -132,48 +148,15 @@ Doek.Node.prototype.draw = function() {
 	
 	var o = this.instructions;
 	
-	if (this.type == 'line' && !this._idrawn[this.activeStyle.name]['drawn']) {
-	
-		var t = this._idrawn[this.activeStyle.name];
-
-		t.element = document.createElement('canvas');
-		t.ctx = t.element.getContext('2d');
+	if (!this._idrawn[this.activeStyle.name]['drawn']) {
 		
-		t.element.setAttribute('width', this.width);
-		t.element.setAttribute('height', this.height);
-		
-		var ctx = t.ctx;
-		
-		ctx.strokeStyle = this.activeStyle.properties.strokeStyle;
-		ctx.beginPath();
-		
-		var sx = 0;
-		var sy = 0;
-		var dx = 0;
-		var dy = 0;
-		
-		if (this.instructions.dx < this.instructions.sx) {
-			sx = this.width;
-			dx = 0;
-		} else {
-			sx = 0;
-			dx = this.width;
+		switch(this.type) {
+			
+			case 'line':
+				if (this.parentObject.tiled) this._idrawLineBlock();
+				else this._idrawLine();
+				break;
 		}
-		
-		if (this.instructions.dy < this.instructions.sy) {
-			sy = this.height;
-			dy = 0;
-		} else {
-			sy = 0;
-			dy = this.height;
-		}
-		
-        ctx.moveTo(sx, sy);
-        ctx.lineTo(dx, dy);
-        ctx.stroke();
-		
-		// It has now been drawn internally
-		this._idrawn[this.activeStyle.name]['drawn'] = true;
 	}
 	
 	var ctx = this.parentObject.parentLayer.ctx;
@@ -182,6 +165,112 @@ Doek.Node.prototype.draw = function() {
 	
 	this.drawn = true;
 
+}
+
+Doek.Node.prototype._idrawLineBlock = function () {
+	var t = this._idrawn[this.activeStyle.name];
+
+	t.element = document.createElement('canvas');
+	t.ctx = t.element.getContext('2d');
+	
+	t.element.setAttribute('width', this.width);
+	t.element.setAttribute('height', this.height);
+	
+	var drawnPos = {}
+	
+	var begin = {x: this.instructions.sx, y: this.instructions.sy}
+	
+	var ep = new Doek.Position(this.canvas, this.instructions.dx, this.instructions.dy, 'map');
+	
+	var end = {x: ep.tiled.dx, y: ep.tiled.dy}
+	
+	var coordinates = Doek.getLineCoordinates(begin, end);
+	
+	var ctx = t.ctx;
+	
+	ctx.lineWidth = this.activeStyle.properties.lineWidth;
+	ctx.strokeStyle = this.activeStyle.properties.strokeStyle;
+	ctx.fillStyle = '#009900'; //this.activeStyle.properties.strokeStyle;
+	
+	var size = this.canvas.settings.tileSize;
+	
+	for (var key in coordinates) {
+		
+		var c = coordinates[key];
+		var np = new Doek.Position(this.canvas, c.x, c.y, 'abs');
+		
+		var bp = this._getInternalPosition(np.tiled.sx, np.tiled.sy);
+		
+		ctx.fillRect(bp.x,bp.y,size,size);
+		
+	}
+	
+	// It has now been drawn internally
+	this._idrawn[this.activeStyle.name]['drawn'] = true;
+
+}
+
+Doek.Node.prototype._idrawLine = function () {
+	var t = this._idrawn[this.activeStyle.name];
+
+	t.element = document.createElement('canvas');
+	
+	t.ctx = t.element.getContext('2d');
+	
+	t.element.setAttribute('width', this.width);
+	t.element.setAttribute('height', this.height);
+	
+	var ctx = t.ctx;
+	
+	ctx.lineWidth = this.activeStyle.properties.lineWidth;
+	ctx.strokeStyle = this.activeStyle.properties.strokeStyle;
+	ctx.beginPath();
+	
+	var ip = this._getILinePosition();
+	
+	ctx.moveTo(ip.sx, ip.sy);
+	ctx.lineTo(ip.dx, ip.dy);
+	ctx.stroke();
+	
+	// It has now been drawn internally
+	this._idrawn[this.activeStyle.name]['drawn'] = true;
+}
+
+Doek.Node.prototype._getInternalPosition = function (x, y) {
+	
+	x = x - this.position.absX;
+	y = y - this.position.absY;
+
+	return {x: x, y: y}
+}
+
+/**
+ * @todo: This should be removed for a better function
+ */
+Doek.Node.prototype._getILinePosition = function(sx, sy, dx, dy) {
+	
+	if (sx === undefined) sx = 0;
+	if (sy === undefined) sy = 0;
+	if (dx === undefined) dx = 0;
+	if (dy === undefined) dy = 0;
+	
+	if (this.instructions.dx < this.instructions.sx) {
+		sx = this.width;
+		dx = 0;
+	} else {
+		sx = 0;
+		dx = this.width;
+	}
+	
+	if (this.instructions.dy < this.instructions.sy) {
+		sy = this.height;
+		dy = 0;
+	} else {
+		sy = 0;
+		dy = this.height;
+	}
+	
+	return {sx: sx, sy: sy, dx: dx, dy: dy}
 }
 
 /**
