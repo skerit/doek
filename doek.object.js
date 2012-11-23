@@ -99,10 +99,22 @@ Doek.Object.prototype.calculate = function () {
  * @returns	{Doek.Node}
  */
 Doek.Object.prototype.addLine = function(sx, sy, dx, dy, style) {
-	return this.addNode({type: 'line',
+	
+	/*return this.addNode({type: 'line',
 						sx: sx, sy: sy,
 						dx: dx, dy: dy,
-						style: style});
+						style: style});*/
+	
+	var newLine = new Doek.Line({type: 'line',
+						sx: sx, sy: sy,
+						dx: dx, dy: dy,
+						style: style}, this);
+	var index = this.nodes.push(newLine);
+	
+	this.calculate();
+	
+	return newLine;
+
 }
 
 /**

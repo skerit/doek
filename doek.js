@@ -298,3 +298,13 @@ Doek.getLineCoordinates = function(begin, end){
 	
 	return coordinates;
 }
+
+Doek.extend = function (parent, enterfunction) {
+    var intermediateConstructor = enterfunction;
+	
+	for(var i in parent.prototype) {
+		intermediateConstructor.prototype[i] = parent.prototype[i];                  
+	}
+	
+    return intermediateConstructor;
+}
