@@ -9,6 +9,7 @@
         <script src="doek.object.js"></script>
         <script src="doek.node.js"></script>
         <script src="doek.node.line.js"></script>
+        <script src="doek.node.rectangle.js"></script>
         <script src="doek.event.js"></script>
         <script src="doek.action.js"></script>
         <style type="text/css">
@@ -63,10 +64,9 @@
             
             // Create a new action
             var addLine = new Doek.Action('addLine');
-            addLine.storage.layer = layer;
             
             addLine.event.addEvent('init', function (caller, payload) {
-                
+                addLine.storage.layer = layer;
             });
             
             addLine.event.addEvent('mouseupFirst', function(caller, payload) {
@@ -112,7 +112,44 @@
             });
             
             d.registerAction(addLine);
-            d.setAction('addLine');
+            //d.setAction('addLine');
+            
+            // Create a new action
+            // Adding a rectangle
+            var addRectangle = new Doek.Action('addRectangle');
+            addRectangle.storage.layer = layer;
+            
+            addRectangle.event.addEvent('mouseupFirst', function(caller, payload) {
+
+                this.storage.object = new Doek.Object(this.storage.layer);
+                this.storage.object.tiled = true;
+                
+                var style = new Doek.Style('ori');
+                style.properties.strokeStyle = '#DD0000';
+                style.properties.lineWidth = 1;
+                
+                var p = payload.startposition;
+                
+                var myrectangle = this.storage.object.addRectangle(p.absX, p.absY, p.absX, p.absY, style);
+                
+                var hstyle = new Doek.Style('hover');
+                hstyle.properties.strokeStyle = '#009910';
+                this.storage.object.addStyle(hstyle);
+                
+                this.storage.rectangle = myrectangle;
+                this.storage.layer.addObject(this.storage.object);
+            });
+            
+            addRectangle.event.addEvent('mousemoveFirstClick', function (caller, payload) {
+                
+                var pos = payload.position;
+                this.storage.rectangle.setEndpoint(pos);
+                
+                
+            });
+            
+            d.registerAction(addRectangle);
+            //d.setAction('addRectangle');
             
         </script>
     </body>
