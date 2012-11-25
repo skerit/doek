@@ -3,6 +3,10 @@ Doek.Rectangle = Doek.extend(Doek.Node, function(instructions, parentObject) {
 	});
 
 Doek.Rectangle.prototype._calculate = function() {
+	
+	this.width = 0;
+	this.height = 0;
+	
 	// Instructions are always map based
 	var sx = this.instructions.sx;
 	var sy = this.instructions.sy;
@@ -25,26 +29,24 @@ Doek.Rectangle.prototype._calculate = function() {
 		dy = ep.absY;
 	}
 	
+	if (dx <= sx) {
+		sx = ep.tiled.sx;
+		dx = bp.tiled.dx;
+	}
+	
+	if (dy <= sy) {
+		sy = ep.tiled.sy;
+		dy = bp.tiled.dy;
+	}
+	
 	// The position on the parent relative to the sx
 	var pw = sx - dx;
 	var ph = sy - dy;
 	
+	// The width and height are at least 1 pixel
 	this.width = 1 + Math.abs(pw);
 	this.height = 1 + Math.abs(ph);
-
-	if (this.parentObject.tiled) {
-		this.width += this.canvas.settings.tileSize;
-		this.height += this.canvas.settings.tileSize;
-	}
 	
-	if (dx < sx) {
-		sx = sx - this.width;
-	}
-	
-	if (dy < sy) {
-		sy = sy - this.height;
-	}
-
 	this.position = new Doek.Position(this.canvas, sx, sy, 'abs');
 }
 
@@ -61,26 +63,20 @@ Doek.Rectangle.prototype._draw = function() {
 }
 
 Doek.Rectangle.prototype._idrawRectangleBlock = function () {
+	
+	// Get a reference tot he active style's object
 	var t = this._idrawn[this.activeStyle.name];
 
+	// Create necessary elements
 	t.element = document.createElement('canvas');
 	t.ctx = t.element.getContext('2d');
 	
+	// Set the dimensions
 	t.element.setAttribute('width', this.width);
 	t.element.setAttribute('height', this.height);
 	
-	this._iloc = {}
-	
-	var bp = new Doek.Position(this.canvas, this.instructions.sx, this.instructions.sy, 'map');
-	var begin = {x: bp.tiled.sx, y: bp.tiled.sy}
-	
-	var ep = new Doek.Position(this.canvas, this.instructions.dx, this.instructions.dy, 'map');
-	
-	// Decrease end positions by one, otherwise it'll take the neighbouring line into account aswell
-	var end = {x: ep.tiled.dx-1, y: ep.tiled.dy-1}
-	
+	// Set context & style stuff
 	var ctx = t.ctx;
-	
 	ctx.lineWidth = this.activeStyle.properties.lineWidth;
 	ctx.strokeStyle = this.activeStyle.properties.strokeStyle;
 	ctx.fillStyle = this.activeStyle.properties.strokeStyle;
@@ -88,28 +84,56 @@ Doek.Rectangle.prototype._idrawRectangleBlock = function () {
 	var size = this.canvas.settings.tileSize;
 	var id = '';
 	var count = 0;
+	var positionDrawn = {}
 	
-	for (var x = begin.x; x < (begin.x + end.x); x += size) {
+	// Get the begin position
+	var bp = new Doek.Position(this.canvas, this.instructions.sx, this.instructions.sy, 'map');
+	
+	// Get the end position
+	var ep = new Doek.Position(this.canvas, this.instructions.dx, this.instructions.dy, 'map');
+	
+	// Store begin & end in their own varq
+	var begin = {x: bp.tiled.sx, y: bp.tiled.sy}
+	
+	// Decrease end positions by one, otherwise it'll take the neighbouring line into account aswell
+	var end = {x: ep.tiled.dx-1, y: ep.tiled.dy-1}
+	
+	// Take negative values into account
+	if (bp.tiled.sx >= ep.tiled.dx) {
+		begin.x = ep.tiled.sx;
+		end.x = bp.tiled.dx;
+	}
+	
+	if (bp.tiled.sy >= ep.tiled.dy) {
+		begin.y = ep.tiled.sy;
+		end.y = bp.tiled.dy;
+	}
+	
+	// For every x
+	for (var x = begin.x; x < end.x; x += size) {
 		
-		for (var y = begin.y; y < (begin.y + end.y); y += size) {
+		// For every y
+		for (var y = begin.y; y < end.y; y += size) {
 			
-			var np = new Doek.Position(this.canvas, x, y, 'abs');
+			// Get the position of this specific block
+			var blockPos = new Doek.Position(this.canvas, x, y, 'abs');
 			
-			var bp = this._getInternalPosition(np.tiled.sx, np.tiled.sy);
+			// Convert the absolute coordinates to internal positions
+			var internalPos = this._getInternalPosition(blockPos.tiled.sx, blockPos.tiled.sy);
 			
 			id = x + '-' + y;
 			
 			// Keep a record of what we've drawn already
-			if (this._iloc[id] === undefined) {
-				this._iloc[id] = true;
-				ctx.fillRect(x,y,size,size);
+			if (positionDrawn[id] === undefined) {
+				positionDrawn[id] = true;
+				ctx.fillRect(internalPos.x, internalPos.y, size, size);
 			}
 		}
 		
 	}
 	
 	// It has now been drawn internally
-	this._idrawn[this.activeStyle.name]['drawn'] = true;
+	t.drawn = true;
 
 }
 
