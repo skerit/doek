@@ -30,10 +30,14 @@ Doek.Object = function(parentLayer) {
 }
 
 /**
+ * Return an array of nodes on this position
+ * 
  * @param	{Doek.Position}	position
  * @returns	{Doek.Node}
  */
 Doek.Object.prototype.findNode = function (position) {
+	
+	var result = [];
 	
 	for (var index in this.nodes.storage) {
 		
@@ -44,10 +48,12 @@ Doek.Object.prototype.findNode = function (position) {
 
 		if ((position.mapX >= node.position.mapX && position.mapX <= (node.position.mapX + node.width)) &&
 			(position.mapY >= node.position.mapY && position.mapY <= (node.position.mapY + node.height))) {
-			if (node.isInNode(position)) return node;
+			if (node.isInNode(position)) result.push(node);
 		}
 	}
-	return false;
+	
+	if (result.length) return result;
+	else return false;
 }
 
 /**

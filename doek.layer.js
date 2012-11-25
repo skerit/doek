@@ -53,6 +53,8 @@ Doek.Layer = function (name, zindex, canvas) {
 }
 
 /**
+ * Return an array with objects and their nodes on this position
+ * 
  * @param	{Doek.Position}	position
  * @param	{boolean} onlyClickable
  * @returns	{Doek.Node}
@@ -60,6 +62,8 @@ Doek.Layer = function (name, zindex, canvas) {
 Doek.Layer.prototype.findNode = function (position, onlyClickable) {
 	
 	if (onlyClickable === undefined) onlyClickable = true;
+	
+	var result = [];
 	
 	for (var index in this.objects.storage) {
 		
@@ -72,10 +76,17 @@ Doek.Layer.prototype.findNode = function (position, onlyClickable) {
 			(position.mapY >= object.y && position.mapY <= object.dy)) {
 			
 			// Don't continue of the object isn't clickable
-			if (object.clickable || !onlyClickable) return object.findNode(position);
+			if (object.clickable || !onlyClickable) {
+				var nodesInObject = object.findNode(position);
+				
+				if (nodesInObject) result.push({object: object, nodes: nodesInObject});
+				
+			}
 		}
 	}
-	return false;
+	
+	if (result.length) return result;
+	else return false;
 }
 
 /**

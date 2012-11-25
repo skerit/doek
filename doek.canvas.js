@@ -432,6 +432,8 @@ Doek.Canvas.prototype.findNode = function (position, onlyClickable) {
 	
 	if (onlyClickable === undefined) onlyClickable = true;
 	
+	var result = [];
+	
 	for (var index in this.layers) {
 		
 		/**
@@ -440,8 +442,46 @@ Doek.Canvas.prototype.findNode = function (position, onlyClickable) {
 		var layer = this.layers[index];
 		
 		// Only return this if it's clickable
-		if (layer.clickable || !onlyClickable)
-		return layer.findNode(position);
+		if (layer.clickable || !onlyClickable) {
+			
+			var objectsInLayer = layer.findNode(position);
+			
+			if (objectsInLayer) {
+				result.push({layer: layer, objects: objectsInLayer});
+			}
+			
+		}
+	}
+	
+	if (result.length) {
+		
+		for (var layerid in result) {
+			
+			var layer = result[layerid].layer;
+			var objects = result[layerid].objects;
+			
+			for (var objectid in objects) {
+				
+				var object = objects[objectid].object;
+				var nodes = objects[objectid].nodes;
+				
+				for (var nodeid in nodes) {
+					
+					/**
+					 * @type	{Doek.Node}
+					 */
+					var node = nodes[nodeid];
+
+					var isInNode = node.isInNode(position);
+					
+					if (isInNode) return node;
+					
+				}
+				
+			}
+			
+		}
+		
 	}
 	
 	return false;

@@ -140,6 +140,9 @@ Doek.Line.prototype._idrawLine = function () {
 }
 
 Doek.Line.prototype._isInNode = function (position) {
+
+	if (position === undefined) throw new Error('Tried to find non existing position');
+
 	if (this.parentObject.tiled) {
 		
 		var bp = this._getInternalPosition(position.tiled.sx, position.tiled.sy);

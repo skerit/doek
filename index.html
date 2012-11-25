@@ -117,7 +117,10 @@
             // Create a new action
             // Adding a rectangle
             var addRectangle = new Doek.Action('addRectangle');
-            addRectangle.storage.layer = layer;
+            
+            addRectangle.event.addEvent('init', function(caller){
+                addRectangle.storage.layer = layer;
+            })
             
             addRectangle.event.addEvent('mouseupFirst', function(caller, payload) {
 
