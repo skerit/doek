@@ -18,6 +18,10 @@
     </head>
     <body>
         <div id="world" data-width=500 data-height=500></div>
+        <div id="toolbar">
+            <button id="addline">Add line</button>
+            <button id="addrectangle">Add rectangle</button>
+        </div>
         
         <script>
             var d = new Doek.Canvas('world');
@@ -48,8 +52,6 @@
                 this.applyStyle('ori');
             });
             
-            
-            
             gridObject.event.addEvent('mouseup', function(callernode, payload){
                 if (payload.originnode != callernode) {
                     callernode.applyStyle('upped');
@@ -57,9 +59,7 @@
             });
             
             var layer = d.addLayer('main', 5);
-            d.event.addEvent('mousedown', function(caller, payload){
-                console.log(payload);
-            });
+
             d.setMode('edit');
             
             // Create a new action
@@ -112,7 +112,6 @@
             });
             
             d.registerAction(addLine);
-            //d.setAction('addLine');
             
             // Create a new action
             // Adding a rectangle
@@ -152,7 +151,14 @@
             });
             
             d.registerAction(addRectangle);
-            //d.setAction('addRectangle');
+            
+            $('#addline').click(function(){
+                d.setAction('addLine');
+            });
+            
+            $('#addrectangle').click(function(){
+                d.setAction('addRectangle');
+            });
             
         </script>
     </body>
