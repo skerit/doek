@@ -66,7 +66,11 @@
             var addLine = new Doek.Action('addLine');
             
             addLine.event.addEvent('init', function (caller, payload) {
-                addLine.storage.layer = layer;
+                addLine.storage.layer = payload.layer;
+            });
+            
+            addLine.event.addEvent('finished', function (caller, payload) {
+                publictest = this.storage.line;
             });
             
             addLine.event.addEvent('mouseupFirst', function(caller, payload) {
@@ -88,6 +92,7 @@
                 
                 this.storage.line = myline;
                 this.storage.layer.addObject(this.storage.object);
+                
             });
             
             addLine.event.addEvent('mousemoveFirstClick', function (caller, payload) {
@@ -95,9 +100,8 @@
                 var pos = payload.position;
                 this.storage.line.setEndpoint(pos);
                 
-                
             });
-            
+            var publictest = {};
             addLine.event.addEvent('mouseupn', function (caller, payload) {
                 
                 d.setMode('normal');
@@ -108,6 +112,9 @@
                this.storage.line.event.addEvent('mouseout', function() {
                    this.applyStyle('ori');
                 });
+               
+               // This action only requires one click, so send the finished event
+                this.event.doEvent('finished', this, payload);
                 
             });
             
@@ -117,8 +124,8 @@
             // Adding a rectangle
             var addRectangle = new Doek.Action('addRectangle');
             
-            addRectangle.event.addEvent('init', function(caller){
-                addRectangle.storage.layer = layer;
+            addRectangle.event.addEvent('init', function(caller, payload){
+                addRectangle.storage.layer = payload.layer;
             })
             
             addRectangle.event.addEvent('mouseupFirst', function(caller, payload) {
@@ -147,17 +154,16 @@
                 var pos = payload.position;
                 this.storage.rectangle.setEndpoint(pos);
                 
-                
             });
             
             d.registerAction(addRectangle);
             
             $('#addline').click(function(){
-                d.setAction('addLine');
+                d.setAction('addLine', {layer: layer});
             });
             
             $('#addrectangle').click(function(){
-                d.setAction('addRectangle');
+                d.setAction('addRectangle', {layer: layer});
             });
             
         </script>

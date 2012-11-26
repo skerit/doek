@@ -53,9 +53,8 @@ Doek.Action = function (actionName) {
 	this._mouseDownCount = 0;
 	this._mouseUpCount = 0;
 	
-	// Cleanup
-	this.event.addEvent('init', function(caller){
-		
+	// Init & Cleanup (reset)
+	this.event.addEvent('init', function(caller, payload){
 		this.storage = {}
 	
 		this.button = {
@@ -67,6 +66,11 @@ Doek.Action = function (actionName) {
 		this._mousedown = false;
 		this._mouseDownCount = 0;
 		this._mouseUpCount = 0;
+	});
+	
+	// Finished
+	this.event.addEvent('finished', function(caller){
+		
 	});
 
 	this.event.addEvent('mousedown', function(caller, payload){

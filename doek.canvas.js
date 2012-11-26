@@ -316,7 +316,7 @@ Doek.Canvas.prototype.redraw = function () {
 /**
  * @param	{string}	actionname
  */
-Doek.Canvas.prototype.setAction = function (actionname) {
+Doek.Canvas.prototype.setAction = function (actionname, payload) {
 	
 	var prevAction = this._action;
 	this._action = this.actions.getByName(actionname);
@@ -330,10 +330,10 @@ Doek.Canvas.prototype.setAction = function (actionname) {
 		if (prevAction) prevAction.event.fireEvent('actionend', this, {newaction: this._action, mode: this._mode})
 	} else {
 		// If it is the same action, do a reset
-		if (this._action) this._action.event.fireEvent('requestReset', this);
+		if (this._action) this._action.event.fireEvent('requestReset', this, payload);
 	}
 	
-	if (this._action) this._action.event.fireEvent('init', this);
+	if (this._action) this._action.event.fireEvent('init', this, payload);
 	
 }
 
