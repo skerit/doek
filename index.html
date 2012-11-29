@@ -118,6 +118,20 @@
                 
             });
             
+            addLine.event.addEvent('finished', function (caller, payload) {
+                
+                // Store the object here, so we still have
+                // a reference to it after we've deleted it
+                var obj = this.storage.object;
+                
+                // Remove the object from every collection it has ever been added to
+                obj._remove({redraw: true});
+
+                // Get the line we just created
+                var line = this.storage.line;
+                
+            });
+            
             d.registerAction(addLine);
             
             // Create a new action

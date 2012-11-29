@@ -138,8 +138,30 @@ Doek.Collection.prototype.push = function (obj) {
 	// If the object has a name, store it in the named obj too
 	if (obj.name !== undefined) this._named[obj.name.toLowerCase()] = obj;
 	
+	// Add the remove array, for ever collection this object is added to
+	// a remove function will be created
+	obj._removeFunctions = [];
+	
+	var newRemoveFunction = function(id) {return function(){thisCollection.remove(id)}}(useId);
+	
 	// Set the obj remove function
-	obj._remove = function(id) {return function(){thisCollection.remove(id)}}(useId);
+	obj._removeFunctions.push(newRemoveFunction);
+	
+	/**
+	 * Remove this object from every collection is has been added to
+	 */
+	obj._remove = function(passedObj) {
+		return function(options) {
+			
+			if (options !== undefined) {
+				if (options.redraw) passedObj.event.fireEvent('requestRedraw');
+			}
+			
+			for (var i in passedObj._removeFunctions) {
+				passedObj._removeFunctions[i]();
+			}
+		};
+	}(obj)
 	
 	// Return the id
 	return useId;
