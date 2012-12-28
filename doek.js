@@ -214,7 +214,7 @@ Doek.Collection.prototype.getById = function (id) {
 Doek.Collection.prototype.getByName = function (name) {
 	
 	// Make it case insensitive
-	name = name.toLowerCase();
+	if (typeof name == 'string') name = name.toLowerCase();
 
 	if (this._named[name] !== undefined) return this._named[name];
 	else return false;
