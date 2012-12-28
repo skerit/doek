@@ -33,6 +33,7 @@ Doek.Node.prototype.init = function(instructions, parentObject) {
 	
 	this.version = '';		// What version is drawn now?
 	this.activeStyle = false;
+	this.activeStyles = {}
 	
 	/**
 	 * @type	{Doek.Position}
@@ -41,19 +42,26 @@ Doek.Node.prototype.init = function(instructions, parentObject) {
 	this.styles = {}
 	this._iloc = {}
 	
-	// Start copying styles
-	// Create a new ori style (the default style)
-	// We'll copy every property in here
-	var gS = this.instructions.style;
-	
+	// Create the default style
 	this.styles.ori = new Doek.Style('ori');
-	this.styles.ori.merge(gS);
+	
+	// If another style was given, merge it into the default
+	if (this.instructions.style !== undefined) {
+		var gS = this.instructions.style;
+		this.styles.ori.merge(gS);
+	}
+	
+	// Always set the ori style to weight 0
+	this.styles.ori.weight = 0;
 	
 	// Set this as the active style
 	this.activeStyle = this.styles.ori;
 	
 	// If we gave this another name than ori, also copy that
 	this.addStyle(gS);
+	
+	// Activate this new style
+	this.activateStyle('ori');
 	
 	this.calculate();
 	
@@ -83,6 +91,9 @@ Doek.Node.prototype.init = function(instructions, parentObject) {
 
 		this.parentObject.event.fireEvent('mousedown', this, payload);
 	});
+	
+	// And finally, draw
+	this.draw();
 }
 
 Doek.Node.prototype.calculate = function() {
@@ -214,19 +225,26 @@ Doek.Node.prototype.move = function(position) {
 	
 	this.position = position;
 	this.event.fireEvent('requestredraw', this);
-	
+
 }
 
 /**
  * Add a new style to the node, only if it does not exist yet
  * @param	{Doek.Style}	style
  */
-Doek.Node.prototype.addStyle = function(style) {
+Doek.Node.prototype.addStyle = function(style, clone) {
+	
+	// Only clone the style if we really want to
+	if (clone === undefined) clone = false;
 	
 	if (this.styles[style.name] === undefined) {
 		// Add the new style
-		this.styles[style.name] = new Doek.Style(style.name);
-		this.styles[style.name].merge(style);
+		if (clone) {
+			this.styles[style.name] = new Doek.Style(style.name);
+			this.styles[style.name].merge(style);
+		} else {
+			this.styles[style.name] = style;
+		}
 	}
 }
 
@@ -242,5 +260,46 @@ Doek.Node.prototype.applyStyle = function (stylename, requestRedraw) {
 		
 		if (requestRedraw) this.event.fireEvent('requestredraw', this);
 	}
+}
+
+/**
+ * Activate a certain style
+ */
+Doek.Node.prototype.activateStyle = function (stylename, requestRedraw) {
 	
+	if (this.styles[stylename] !== undefined) {
+		this.activeStyles[stylename] = this.styles[stylename];
+		
+		this.determineStyle(requestRedraw);
+		
+	}
+}
+
+/**
+ * Deactivate a certain style
+ */
+Doek.Node.prototype.deactivateStyle = function (stylename, requestRedraw) {
+	
+	if (this.activeStyles[stylename] !== undefined) {
+		delete this.activeStyles[stylename];
+		this.determineStyle(requestRedraw);
+	}
+}
+
+/**
+ * Determine which style should be used
+ */
+Doek.Node.prototype.determineStyle = function (requestRedraw) {
+
+	var weight = 0;
+	var newActiveStyle = 'ori';
+
+	// Loop through all the active styles, see which one is heaviest
+	for (var sn in this.activeStyles) {
+		if (this.activeStyles[sn]['weight'] > weight) {
+			newActiveStyle = sn;
+		}
+	}
+	
+	this.applyStyle(newActiveStyle, requestRedraw);
 }

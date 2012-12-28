@@ -57,18 +57,28 @@ Doek.Object.prototype.findNode = function (position) {
 }
 
 /**
- * Add a node to this object, don't draw it yet
+ * Create and add a node to this object, don't draw it yet
  *
  * @param	{object}	instruction
  * @returns	{Doek.Node}
  */
-Doek.Object.prototype.addNode = function (instruction) {
+Doek.Object.prototype.createAddNode = function (instruction) {
 	var newNode = new Doek.Node(instruction, this);
 	var index = this.nodes.push(newNode);
 	
 	this.calculate();
 	
 	return newNode;
+}
+
+/**
+ * Add a node to this object, don't draw it yet
+ *
+ * @param	{Doek.Node}
+ */
+Doek.Object.prototype.addNode = function (newNode) {
+	var index = this.nodes.push(newNode);
+	this.calculate();
 }
 
 /**

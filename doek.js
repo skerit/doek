@@ -240,13 +240,17 @@ Doek.Collection.prototype.remove = function (index) {
 	
 }
 
+/**
+ * The Style class
+ */
 Doek.Style = function(stylename) {
 	
 	this.name = stylename;
+	this.weight = 1;
 	
 	this.properties = {};
-	this.properties.fillStyle = null;
-	this.properties.strokeStyle = null;
+	this.properties.fillStyle = '#ffd700';
+	this.properties.strokeStyle = '#FF0000';
 	this.properties.lineWidth = 1;
 	
 }
@@ -265,6 +269,9 @@ Doek.Style.prototype.merge = function (style) {
 			this.properties[key] = props[key];
 		}
 	}
+	
+	this.weight = style.weight;
+	
 }
 
 /**
