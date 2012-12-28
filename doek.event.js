@@ -30,7 +30,7 @@ Doek.Event = function(owner, canvas) {
 }
 
 /**
- * Add an event to something
+ * Add an event listener to something
  */
 Doek.Event.prototype.addEvent = function(eventType, endFunction) {
 	
@@ -45,6 +45,12 @@ Doek.Event.prototype.addEvent = function(eventType, endFunction) {
 								'endFunction': endFunction});
 	
 }
+
+/**
+ * Alias for the 'addEvent'
+ * 'on' makes more sense
+ */
+Doek.Event.prototype.on = Doek.Event.prototype.addEvent;
 
 /**
  * Execute & bubble the event

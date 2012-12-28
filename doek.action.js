@@ -70,11 +70,11 @@ Doek.Action = function (actionName) {
 	});
 	
 	// Finished
-	this.event.addEvent('finished', function(caller){
+	this.event.on('finished', function(caller){
 		
 	});
 
-	this.event.addEvent('mousedown', function(caller, payload){
+	this.event.on('mousedown', function(caller, payload){
 		
 		var button = payload.button;
 		
@@ -104,7 +104,7 @@ Doek.Action = function (actionName) {
 		this.event.fireEvent('mousedownAny', this, payload, [button]);
 	});
 	
-	this.event.addEvent('mouseup', function(caller, payload){
+	this.event.on('mouseup', function(caller, payload){
 		
 		var button = payload.button;
 		
@@ -129,7 +129,7 @@ Doek.Action = function (actionName) {
 		this.event.fireEvent('mouseupAny', this, payload, [button]);
 	});
 	
-	this.event.addEvent('mousemove', function(caller, payload){
+	this.event.on('mousemove', function(caller, payload){
 		
 		if (payload === undefined) payload = {};
 		payload.originalcaller = caller;
