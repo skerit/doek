@@ -34,6 +34,7 @@ Doek.Action = function (actionName) {
 	 * 						clicked once
 	 * mousemoveNDown: When the mouse moves when we're pressing
 	 * 				   down, but not on the first time
+	 * mousemoveDown: When the mouse moves when we're pressing down, any time
 	 * mousemoveNClick
 	 * mousemoveAny
 	 */
@@ -147,6 +148,9 @@ Doek.Action = function (actionName) {
 		
 		// We're moving after nth click
 		else this.event.fireEvent('mousemoveNClick', this, payload);
+		
+		// We're moving while pressing down, any time
+		if (this.button.left.down) this.event.fireEvent('mousemoveDown', this, payload);
 		
 		// Also send any movement
 		this.event.fireEvent('mousemoveAny', this, payload);
