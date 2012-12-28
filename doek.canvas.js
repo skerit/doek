@@ -372,6 +372,10 @@ Doek.Canvas.prototype.applyNodeMouse = function (newNode, payload) {
 	
 	var notifyObject = false;
 	
+	if (payload.originnode === undefined) {
+			payload.originnode = this._clickNode;
+		}
+	
 	// If an action is activated, let it handle the click
 	if (this._action) {
 		
