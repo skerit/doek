@@ -30,6 +30,12 @@ Doek.Node.prototype.init = function(instructions, parentObject) {
 	
 	this.event = new Doek.Event(this, this.parentObject.parentLayer.parentCanvas);
 	
+	/**
+	 * Event aliases
+	 */
+	this.on = function (event, callback) {return this.event.on(event, callback)};
+	this.fire = function (eventType, caller, payload, modifiers) {return this.event.fireEvent(eventType, caller, payload, modifiers)};
+	
 	this.drawn = false;		// Is it drawn on the parent?
 	this._idrawn = {};		// Is it drawn internally?
 	
@@ -68,35 +74,35 @@ Doek.Node.prototype.init = function(instructions, parentObject) {
 	this.calculate();
 	
 	// Add our own event listeners
-	this.event.addEvent('hasCleared', function(caller){
+	this.on('hasCleared', function(caller){
 		this.drawn = false;
 	});
 	
-	this.event.addEvent('redraw', function(caller){
+	this.on('redraw', function(caller){
 		this.draw(this.version);
 		this.parentObject.drawn = true;
 		this.drawn = true;
 	});
 	
-	this.event.addEvent('mouseup', function(caller, payload){
+	this.on('mouseup', function(caller, payload){
 		
 		if (payload === undefined) payload = {};
 		payload.originalcaller = caller;
 
 		if (payload.originnode == thisNode) {
-			this.event.fireEvent('mouseclick', this, payload);
+			this.fire('mouseclick', this, payload);
 		}
 		
-		this.parentObject.event.fireEvent('mouseup', this, payload);
+		this.parentObject.fire('mouseup', this, payload);
 	});
 	
-	this.event.addEvent('mousedown', function(caller, payload){
+	this.on('mousedown', function(caller, payload){
 		
 		if (payload === undefined) payload = {};
 		
 		payload.originalcaller = caller;
 
-		this.parentObject.event.fireEvent('mousedown', this, payload);
+		this.parentObject.fire('mousedown', this, payload);
 	});
 	
 	// And finally, draw
@@ -216,7 +222,7 @@ Doek.Node.prototype.setEndpoint = function(endposition) {
 	this._idrawn = {};
 	this._setEndpoint(endposition);
 	this.calculate();
-	this.event.fireEvent('requestredraw', this);
+	this.fire('requestredraw', this);
 	
 }
 
@@ -231,7 +237,7 @@ Doek.Node.prototype._setEndpoint = function (endposition) {
 Doek.Node.prototype.move = function(position) {
 	
 	this.position = position;
-	this.event.fireEvent('requestredraw', this);
+	this.fire('requestredraw', this);
 
 }
 
@@ -265,7 +271,7 @@ Doek.Node.prototype.applyStyle = function (stylename, requestRedraw) {
 	if (this.styles[stylename] !== undefined) {
 		this.activeStyle = this.styles[stylename];
 		
-		if (requestRedraw) this.event.fireEvent('requestredraw', this);
+		if (requestRedraw) this.fire('requestredraw', this);
 	}
 }
 

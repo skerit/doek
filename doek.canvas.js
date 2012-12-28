@@ -46,6 +46,12 @@ Doek.Canvas = function (containerId) {
 	
 	this.event = new Doek.Event(this, this);
 	
+	/**
+	 * Event aliases
+	 */
+	this.on = function (event, callback) {return this.event.on(event, callback)};
+	this.fire = function (eventType, caller, payload, modifiers) {return this.event.fireEvent(eventType, caller, payload, modifiers)};
+	
 	// Over what node are we hovering?
 	this._hoverNode = false;
 	
@@ -84,12 +90,12 @@ Doek.Canvas = function (containerId) {
 		if (thisCanvas._action) {
 			
 			payload.node = node;
-			thisCanvas._action.event.fireEvent('click', thisCanvas, payload);
+			thisCanvas._action.fire('click', thisCanvas, payload);
 			
 		} else {
 			
 			// If no action is activated, send the click to the node
-			if (node) node.event.fireEvent('click', thisCanvas, payload);
+			if (node) node.fire('click', thisCanvas, payload);
 		}
     });
     
@@ -132,13 +138,13 @@ Doek.Canvas = function (containerId) {
 		// If an action is activated, let it handle the mousedown
 		if (thisCanvas._action) {
 			payload.node = node;
-			thisCanvas._action.event.fireEvent('mousedown', thisCanvas, payload, [button]);
+			thisCanvas._action.fire('mousedown', thisCanvas, payload, [button]);
 		} else {
 			// If no action is activated, send the mousedown to the node
-			if (node) node.event.fireEvent('mousedown', thisCanvas, payload, [button]);
+			if (node) node.fire('mousedown', thisCanvas, payload, [button]);
 		}
 		
-		thisCanvas.event.fireEvent('mousedown', thisCanvas, payload, [button]);
+		thisCanvas.fire('mousedown', thisCanvas, payload, [button]);
 
     });
 	
@@ -177,13 +183,13 @@ Doek.Canvas = function (containerId) {
 		// If an action is activated, let it handle the mouseup
 		if (thisCanvas._action) {
 			payload.node = node;
-			thisCanvas._action.event.fireEvent('mouseup', thisCanvas, payload, [button]);
+			thisCanvas._action.fire('mouseup', thisCanvas, payload, [button]);
 		} else {
 			// If no action is activated, send the mouseup to the node
-			if (node) node.event.fireEvent('mouseup', thisCanvas, payload, [button]);
+			if (node) node.fire('mouseup', thisCanvas, payload, [button]);
 		}
 		
-		thisCanvas.event.fireEvent('mouseup', thisCanvas, payload, [button]);
+		thisCanvas.fire('mouseup', thisCanvas, payload, [button]);
 		
 		thisCanvas.button[button].downPosition = false;
 		
@@ -207,48 +213,48 @@ Doek.Canvas = function (containerId) {
 			dir = 'up';
 		}
 		
-		if (node) node.event.fireEvent('scroll', thisCanvas, payload, [dir]);
-		thisCanvas.event.fireEvent('scroll', thisCanvas, payload, [dir]);
+		if (node) node.fire('scroll', thisCanvas, payload, [dir]);
+		thisCanvas.fire('scroll', thisCanvas, payload, [dir]);
 		
 	});
 	
 	// Listen to our own custom events
-	this.event.addEvent('scroll', function(caller, payload){
+	this.on('scroll', function(caller, payload){
 		// Simulate a mousemove
 		if (this.settings.scrollSimulateMouseMove) {
 			this._triggerMousemove(payload.position);
 		}
 	});
 	
-	this.event.addEvent('scrollup', function(caller, payload){
+	this.on('scrollup', function(caller, payload){
 		if (this.settings.scrollMap) {
 			this.position.y++;
 			this.redraw();
 		}
 	});
     
-	this.event.addEvent('scrollright', function(caller, payload){
+	this.on('scrollright', function(caller, payload){
 		if (this.settings.scrollMap) {
 			this.position.x--;
 			this.redraw();
 		}
 	});
 	
-	this.event.addEvent('scrolldown', function(caller, payload){
+	this.on('scrolldown', function(caller, payload){
 		if (this.settings.scrollMap) {
 			this.position.y--;
 			this.redraw();
 		}
 	});
             
-	this.event.addEvent('scrollleft', function(caller, payload){
+	this.on('scrollleft', function(caller, payload){
 		if (this.settings.scrollMap) {
 			this.position.x++;
 			this.redraw();
 		}
 	});
 	
-	this.event.addEvent('dragmiddle', function(caller, payload){
+	this.on('dragmiddle', function(caller, payload){
 		if (this.settings.scrollMap) {
 			var start = payload.dragstartposition;
 			var now = payload.position;
@@ -276,7 +282,7 @@ Doek.Canvas.prototype.setMode = function (modename) {
 	this._action = false;
 	
 	if (prevMode != modename) {
-		this.event.fireEvent('modechange', this, {oldmode: prevMode, oldaction: prevAction, newmode: modename, newaction: false})
+		this.fire('modechange', this, {oldmode: prevMode, oldaction: prevAction, newmode: modename, newaction: false})
 	}
 	
 }
@@ -289,28 +295,28 @@ Doek.Canvas.prototype._triggerMousemove = function(p) {
 	this.applyNodeMouse(node, payload);
 	
 	// Also send the mousemove event to the canvas
-	this.event.fireEvent('mousemove', this, payload);
+	this.fire('mousemove', this, payload);
 	
 	// And for every clicked button, there's a drag
 	if (this.button.left.down) {
 		payload.dragstartposition = this.button.left.downPosition;
-		this.event.fireEvent('dragleft', this, payload);
+		this.fire('dragleft', this, payload);
 	}
 	
 	if (this.button.middle.down) {
 		payload.dragstartposition = this.button.middle.downPosition;
-		this.event.fireEvent('dragmiddle', this, payload);
+		this.fire('dragmiddle', this, payload);
 	}
 	
 	if (this.button.right.down) {
 		payload.dragstartposition = this.button.right.downPosition;
-		this.event.fireEvent('dragright', this, payload);
+		this.fire('dragright', this, payload);
 	}
 	
 }
 
 Doek.Canvas.prototype.redraw = function () {
-	this.event.fireEvent('redraw', this);
+	this.fire('redraw', this);
 }
 
 /**
@@ -324,16 +330,16 @@ Doek.Canvas.prototype.setAction = function (actionname, payload) {
 	if (prevAction != this._action) {
 		
 		// Inform the canvas and children the action has changed
-		this.event.fireEvent('actionchange', this, {oldaction: prevAction, newaction: this._action, mode: this._mode})
+		this.fire('actionchange', this, {oldaction: prevAction, newaction: this._action, mode: this._mode})
 		
 		// Inform the previous action it has ended
-		if (prevAction) prevAction.event.fireEvent('actionend', this, {newaction: this._action, mode: this._mode})
+		if (prevAction) prevAction.fire('actionend', this, {newaction: this._action, mode: this._mode})
 	} else {
 		// If it is the same action, do a reset
-		if (this._action) this._action.event.fireEvent('requestReset', this, payload);
+		if (this._action) this._action.fire('requestReset', this, payload);
 	}
 	
-	if (this._action) this._action.event.fireEvent('init', this, payload);
+	if (this._action) this._action.fire('init', this, payload);
 	
 }
 
@@ -377,20 +383,20 @@ Doek.Canvas.prototype.applyNodeMouse = function (newNode, payload) {
 			
 			// There was a previous node
 			if (prevNode) {
-				this._action.event.fireEvent('mouseout', this, payload);
+				this._action.fire('mouseout', this, payload);
 			} else {
 				// @todo: This should be sent to the object, but the action doesn't know that
-				if (newNode) this._action.event.fireEvent('mouseenter', this, payload);
+				if (newNode) this._action.fire('mouseenter', this, payload);
 			}
 			
 			// @todo: This will receive the same info as above
-			if (newNode) this._action.event.fireEvent('mouseenter', this, payload);
+			if (newNode) this._action.fire('mouseenter', this, payload);
 		}
 		
 		// Set the newly found node (or false) as the hovernode
 		this._hoverNode = newNode;
 	
-		this._action.event.fireEvent('mousemove', this, payload);
+		this._action.fire('mousemove', this, payload);
 		
 	} else {
 	
@@ -399,23 +405,23 @@ Doek.Canvas.prototype.applyNodeMouse = function (newNode, payload) {
 			
 			// There was a previous node
 			if (prevNode) {
-				prevNode.event.fireEvent('mouseout', this, payload);
+				prevNode.fire('mouseout', this, payload);
 			
 				// If the objects also differ, inform them too	
 				if (newNode.parentObject != prevNode.parentObject) {
-					prevNode.parentObject.event.fireEvent('mouseout', this, payload);
+					prevNode.parentObject.fire('mouseout', this, payload);
 				}
 			} else {
-				if (newNode) newNode.parentObject.event.fireEvent('mouseenter', this, payload);
+				if (newNode) newNode.parentObject.fire('mouseenter', this, payload);
 			}
 			
-			if (newNode) newNode.event.fireEvent('mouseenter', this, payload);
+			if (newNode) newNode.fire('mouseenter', this, payload);
 		}
 		
 		// Set the newly found node (or false) as the hovernode
 		this._hoverNode = newNode;
 	
-		if (newNode) newNode.event.fireEvent('mousemove', this, payload);
+		if (newNode) newNode.fire('mousemove', this, payload);
 		
 	}
 	

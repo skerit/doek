@@ -15,6 +15,13 @@ Doek.Object = function(parentLayer) {
 	this.clickable = true;
 	
 	this.event = new Doek.Event(this, this.parentLayer.parentCanvas);
+	
+	/**
+	 * Event aliases
+	 */
+	this.on = function (event, callback) {return this.event.on(event, callback)};
+	this.fire = function (eventType, caller, payload, modifiers) {return this.event.fireEvent(eventType, caller, payload, modifiers)};
+	
 	this.tiled = false;
 	
 	this.x = 0;
@@ -23,7 +30,7 @@ Doek.Object = function(parentLayer) {
 	this.dy = 0;
 	
 	// Add our own events
-	this.event.addEvent('hasCleared', function(caller){
+	this.on('hasCleared', function(caller){
 		this.drawn = false;
 	});
 	
@@ -197,6 +204,6 @@ Doek.Object.prototype.applyStyle = function (stylename) {
 		this.nodes.storage[index].applyStyle(stylename, false);
 	}
 	
-	this.event.fireEvent('requestredraw', this);
+	this.fire('requestredraw', this);
 	
 }

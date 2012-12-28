@@ -38,21 +38,21 @@
             upStyle.properties.strokeStyle = '#101099';
             gridObject.addStyle(upStyle);
             
-            gridObject.event.addEvent('mouseMove', function(caller, payload){
+            gridObject.on('mouseMove', function(caller, payload){
                 this.applyStyle('hover');
                 //console.log({'objectp': payload});
             });
             
-            gridObject.parentLayer.event.addEvent('mouseMove', function(caller, payload){
+            gridObject.parentLayer.on('mouseMove', function(caller, payload){
                 //this.applyStyle('hover');
                 //console.log({'layerp': payload});
             });
             
-            gridObject.event.addEvent('mouseOut', function(caller){
+            gridObject.on('mouseOut', function(caller){
                 this.applyStyle('ori');
             });
             
-            gridObject.event.addEvent('mouseup', function(callernode, payload){
+            gridObject.on('mouseup', function(callernode, payload){
                 if (payload.originnode != callernode) {
                     callernode.applyStyle('upped');
                 }
@@ -65,15 +65,15 @@
             // Create a new action
             var addLine = new Doek.Action('addLine');
             
-            addLine.event.addEvent('init', function (caller, payload) {
+            addLine.on('init', function (caller, payload) {
                 addLine.storage.layer = payload.layer;
             });
             
-            addLine.event.addEvent('finished', function (caller, payload) {
+            addLine.on('finished', function (caller, payload) {
                 publictest = this.storage.line;
             });
             
-            addLine.event.addEvent('mouseupFirst', function(caller, payload) {
+            addLine.on('mouseupFirst', function(caller, payload) {
 
                 this.storage.object = new Doek.Object(this.storage.layer);
                 this.storage.object.tiled = true;
@@ -95,21 +95,21 @@
                 
             });
             
-            addLine.event.addEvent('mousemoveFirstClick', function (caller, payload) {
+            addLine.on('mousemoveFirstClick', function (caller, payload) {
                 
                 var pos = payload.position;
                 this.storage.line.setEndpoint(pos);
                 
             });
             var publictest = {};
-            addLine.event.addEvent('mouseupn', function (caller, payload) {
+            addLine.on('mouseupn', function (caller, payload) {
                 
                 d.setMode('normal');
-               this.storage.line.event.addEvent('mousemove', function() {
+               this.storage.line.on('mousemove', function() {
                    this.applyStyle('hover');
                 });
                
-               this.storage.line.event.addEvent('mouseout', function() {
+               this.storage.line.on('mouseout', function() {
                    this.applyStyle('ori');
                 });
                
@@ -118,7 +118,7 @@
                 
             });
             
-            addLine.event.addEvent('finished', function (caller, payload) {
+            addLine.on('finished', function (caller, payload) {
                 
                 // Store the object here, so we still have
                 // a reference to it after we've deleted it
@@ -138,11 +138,11 @@
             // Adding a rectangle
             var addRectangle = new Doek.Action('addRectangle');
             
-            addRectangle.event.addEvent('init', function(caller, payload){
+            addRectangle.on('init', function(caller, payload){
                 addRectangle.storage.layer = payload.layer;
             })
             
-            addRectangle.event.addEvent('mouseupFirst', function(caller, payload) {
+            addRectangle.on('mouseupFirst', function(caller, payload) {
 
                 this.storage.object = new Doek.Object(this.storage.layer);
                 this.storage.object.tiled = true;
@@ -163,7 +163,7 @@
                 this.storage.layer.addObject(this.storage.object);
             });
             
-            addRectangle.event.addEvent('mousemoveFirstClick', function (caller, payload) {
+            addRectangle.on('mousemoveFirstClick', function (caller, payload) {
                 
                 var pos = payload.position;
                 this.storage.rectangle.setEndpoint(pos);

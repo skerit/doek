@@ -36,17 +36,23 @@ Doek.Layer = function (name, zindex, canvas) {
 	
 	this.event = new Doek.Event(this, this.parentCanvas);
 	
+	/**
+	 * Event aliases
+	 */
+	this.on = function (event, callback) {return this.event.on(event, callback)};
+	this.fire = function (eventType, caller, payload, modifiers) {return this.event.fireEvent(eventType, caller, payload, modifiers)};
+	
 	// Add our own events
-	this.event.addEvent('requestRedraw', function(caller){
+	this.on('requestRedraw', function(caller){
 		
 		// When the layer gets this request, it means something has actually requested a redraw
-		this.event.fireEvent('redraw', this);
+		this.fire('redraw', this);
 		
 		// Do not bubble this down any further (to the canvas)
 		return 'endbubble';
 	});
 	
-	this.event.addEvent('redraw', function(caller){
+	this.on('redraw', function(caller){
 		this.clear();
 	});
 	
