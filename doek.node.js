@@ -19,6 +19,8 @@ Doek.Node.prototype.init = function(instructions, parentObject) {
 	// Current instructions
 	this.instructions = Doek.deepCopy(instructions);
 	
+	var thisNode = this;
+	
 	/**
 	 * @type	{Doek.Object}
 	 */
@@ -80,6 +82,11 @@ Doek.Node.prototype.init = function(instructions, parentObject) {
 		
 		if (payload === undefined) payload = {};
 		payload.originalcaller = caller;
+
+		if (payload.originnode == thisNode) {
+			this.event.fireEvent('mouseclick', this, payload);
+		}
+		
 		this.parentObject.event.fireEvent('mouseup', this, payload);
 	});
 	
