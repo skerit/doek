@@ -292,11 +292,6 @@ Doek.Canvas.prototype._triggerMousemove = function(p) {
 	var node = this.findNode(p);
 	var payload = {position: p}
 	
-	this.applyNodeMouse(node, payload);
-	
-	// Also send the mousemove event to the canvas
-	this.fire('mousemove', this, payload);
-	
 	// And for every clicked button, there's a drag
 	if (this.button.left.down) {
 		payload.dragstartposition = this.button.left.downPosition;
@@ -312,6 +307,11 @@ Doek.Canvas.prototype._triggerMousemove = function(p) {
 		payload.dragstartposition = this.button.right.downPosition;
 		this.fire('dragright', this, payload);
 	}
+	
+	this.applyNodeMouse(node, payload);
+	
+	// Also send the mousemove event to the canvas
+	this.fire('mousemove', this, payload);
 	
 }
 

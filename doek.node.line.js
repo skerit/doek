@@ -48,6 +48,11 @@ Doek.Line.prototype._calculate = function() {
 	this.position = new Doek.Position(this.canvas, sx, sy, 'abs');
 }
 
+Doek.Line.prototype._setBeginpoint = function(beginposition) {
+	this.instructions.sx = beginposition.mapX;
+	this.instructions.sy = beginposition.mapY;
+}
+
 Doek.Line.prototype._setEndpoint = function(endposition) {
 	this.instructions.dx = endposition.mapX;
 	this.instructions.dy = endposition.mapY;

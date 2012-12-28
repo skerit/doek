@@ -213,6 +213,24 @@ Doek.Node.prototype._getILinePosition = function(sx, sy, dx, dy) {
 }
 
 /**
+ * Set the beginpoint
+ * @param	{Doek.Position}	beginposition
+ */
+Doek.Node.prototype.setBeginpoint = function(beginposition) {
+	
+	// Reset the drawn cache
+	this._idrawn = {};
+	this._setBeginpoint(beginposition);
+	this.calculate();
+	this.fire('requestredraw', this);
+	
+}
+
+Doek.Node.prototype._setBeginpoint = function (beginposition) {
+	// Function to be overwritten when extended
+}
+
+/**
  * Set the endpoint
  * @param	{Doek.Position}	endposition
  */
