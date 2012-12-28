@@ -61,7 +61,7 @@ Doek.Action = function (actionName) {
 	this._mouseUpCount = 0;
 	
 	// Init & Cleanup (reset)
-	this.event.addEvent('init', function(caller, payload){
+	this.on('init', function(caller, payload){
 		this.storage = {}
 	
 		this.button = {

@@ -153,10 +153,10 @@ Doek.Event.prototype.bubbleEvent = function(eventType, payload) {
 		else var children = this.owner._children;
 		
 		for (var key in children) {
-			children[key].event.fireEvent(eventType, this.owner, payload);
+			children[key].fire(eventType, this.owner, payload);
 		}
 	} else if (direction == 'down' && this.owner._parent !== undefined) {
 		
-		this.owner._parent.event.fireEvent(eventType, this.owner, payload);
+		this.owner._parent.fire(eventType, this.owner, payload);
 	}
 }

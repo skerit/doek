@@ -154,7 +154,7 @@ Doek.Collection.prototype.push = function (obj) {
 		return function(options) {
 			
 			if (options !== undefined) {
-				if (options.redraw) passedObj.event.fireEvent('requestRedraw');
+				if (options.redraw) passedObj.fire('requestRedraw');
 			}
 			
 			for (var i in passedObj._removeFunctions) {

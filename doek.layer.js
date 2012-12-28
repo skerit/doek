@@ -109,7 +109,7 @@ Doek.Layer.prototype.drawObject = function (index) {
 
 Doek.Layer.prototype.clear = function() {
 	this.ctx.clearRect (0, 0,  this.parent.width, this.parent.height);	
-	this.event.fireEvent('hasCleared', this);
+	this.fire('hasCleared', this);
 	
 }
 
