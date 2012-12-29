@@ -29,6 +29,9 @@ Doek.Object = function(parentLayer) {
 	this.dx = 0;
 	this.dy = 0;
 	
+	this.width = 0;
+	this.height = 0;
+	
 	// Add our own events
 	this.on('hasCleared', function(caller){
 		this.drawn = false;
@@ -98,6 +101,9 @@ Doek.Object.prototype.calculate = function () {
 	this.dx = false;
 	this.dy = false;
 	
+	var oldWidth = this.width;
+	var oldHeight = this.height;
+	
 	for (var index in this.nodes.storage) {
 		
 		var node = this.nodes.storage[index];
@@ -112,6 +118,14 @@ Doek.Object.prototype.calculate = function () {
 		if (this.dx < dx || this.dx === false) this.dx = dx;
 		if (this.dy < dy || this.dy === false) this.dy = dy;
 		
+	}
+	
+	this.width = Math.abs(this.x - this.dx);
+	this.height = Math.abs(this.y - this.dy);
+	
+	// Fire the dimension change event if the dimensions of the object have changed
+	if (this.width != oldWidth || this.height != oldHeight) {
+		this.fire('dimensionchange', this, {oldWidth: oldWidth, oldHeight: oldHeight});
 	}
 	
 }

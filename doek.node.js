@@ -43,6 +43,8 @@ Doek.Node.prototype.init = function(instructions, parentObject) {
 	this.activeStyle = false;
 	this.activeStyles = {}
 	
+	this._visible = true;   // When false, the node will not be drawn
+	
 	/**
 	 * @type	{Doek.Position}
 	 */
@@ -57,6 +59,9 @@ Doek.Node.prototype.init = function(instructions, parentObject) {
 	if (this.instructions.style !== undefined) {
 		var gS = this.instructions.style;
 		this.styles.ori.merge(gS);
+		
+		// If we gave this another name than ori, also copy that
+		this.addStyle(gS);
 	}
 	
 	// Always set the ori style to weight 0
@@ -64,9 +69,6 @@ Doek.Node.prototype.init = function(instructions, parentObject) {
 	
 	// Set this as the active style
 	this.activeStyle = this.styles.ori;
-	
-	// If we gave this another name than ori, also copy that
-	this.addStyle(gS);
 	
 	// Activate this new style
 	this.activateStyle('ori');
@@ -130,6 +132,8 @@ Doek.Node.prototype.draw = function() {
 	// Recalculate
 	this.calculate();
 	
+	if (!this._visible) return false;
+	
 	// Create the internally drawn cache var for this version
 	if (this._idrawn[this.activeStyle.name] === undefined) {
 		this._idrawn[this.activeStyle.name] = {
@@ -151,6 +155,48 @@ Doek.Node.prototype.draw = function() {
 	
 	this.drawn = true;
 
+}
+
+/**
+ * Enable drawing of this node
+ * 
+ * Event fired: show (if not previously visible)
+ *
+ * @author   Jelle De Loecker   <jelle@kipdola.be>
+ * @since    2012.12.29
+ */
+Doek.Node.prototype.show = function (preventRedraw) {
+	
+	if (preventRedraw === undefined) preventRedraw = false;
+	
+	var oldShow = this._visible;
+	this._visible = true;
+	
+	if (!oldShow) {
+		this.fire('show', this);
+		if (!preventRedraw) this.fire('requestredraw', this);
+	}
+}
+
+/**
+ * Disable this node from being drawn
+ *
+ * Event fired: hide (if not previously hidden)
+ *
+ * @author   Jelle De Loecker   <jelle@kipdola.be>
+ * @since    2012.12.29
+ */
+Doek.Node.prototype.hide = function (preventRedraw) {
+	
+	if (preventRedraw === undefined) preventRedraw = false;
+	
+	var oldShow = this._visible;
+	this._visible = false;
+	
+	if (oldShow) {
+		this.fire('hide', this);
+		if (!preventRedraw) this.fire('requestredraw', this);
+	}
 }
 
 Doek.Node.prototype._draw = function() {
