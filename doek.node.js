@@ -223,6 +223,7 @@ Doek.Node.prototype.setBeginpoint = function(beginposition) {
 	this._setBeginpoint(beginposition);
 	this.calculate();
 	this.fire('requestredraw', this);
+	this.fire('propertychange', this);
 	
 }
 
@@ -241,6 +242,7 @@ Doek.Node.prototype.setEndpoint = function(endposition) {
 	this._setEndpoint(endposition);
 	this.calculate();
 	this.fire('requestredraw', this);
+	this.fire('propertychange', this);
 	
 }
 
