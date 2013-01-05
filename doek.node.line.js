@@ -49,13 +49,27 @@ Doek.Line.prototype._calculate = function() {
 }
 
 Doek.Line.prototype._setBeginpoint = function(beginposition) {
-	this.instructions.sx = beginposition.mapX;
-	this.instructions.sy = beginposition.mapY;
+	
+	if (this.parentObject.tiled) {
+		var size = beginposition.tiled.tileSize;
+		this.instructions.sx = beginposition.tiled.mapX * size;
+		this.instructions.sy = beginposition.tiled.mapY * size;
+	} else {
+		this.instructions.sx = beginposition.mapX;
+		this.instructions.sy = beginposition.mapY;
+	}
 }
 
 Doek.Line.prototype._setEndpoint = function(endposition) {
-	this.instructions.dx = endposition.mapX;
-	this.instructions.dy = endposition.mapY;
+	
+	if (this.parentObject.tiled) {
+		var size = endposition.tiled.tileSize;
+		this.instructions.sx = endposition.tiled.mapX * size;
+		this.instructions.sy = endposition.tiled.mapY * size;
+	} else {	
+		this.instructions.dx = endposition.mapX;
+		this.instructions.dy = endposition.mapY;
+	}
 }
 
 Doek.Line.prototype._draw = function() {

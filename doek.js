@@ -25,7 +25,8 @@ Doek.Position = function(canvas, x, y, type, fromTiled) {
 		mapX: false,
 		mapY: false,
 		canvasX: false,
-		canvasY: false
+		canvasY: false,
+		tileSize: size
 	}
 	
 	// Get starting positions
