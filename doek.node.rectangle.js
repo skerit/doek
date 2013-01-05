@@ -51,13 +51,29 @@ Doek.Rectangle.prototype._calculate = function() {
 }
 
 Doek.Rectangle.prototype._setBeginpoint = function(beginposition) {
-	this.instructions.sx = beginposition.mapX;
-	this.instructions.sy = beginposition.mapY;
+		
+	// If the object is tiled, take clean coordinates
+	if (this.parentObject.tiled) {
+		var size = beginposition.tiled.tileSize;
+		this.instructions.sx = beginposition.tiled.mapX * size;
+		this.instructions.sy = beginposition.tiled.mapY * size;
+	} else {
+		this.instructions.sx = beginposition.mapX;
+		this.instructions.sy = beginposition.mapY;
+	}
 }
 
 Doek.Rectangle.prototype._setEndpoint = function(endposition) {
-	this.instructions.dx = endposition.mapX;
-	this.instructions.dy = endposition.mapY;
+		
+	// If the object is tiled, take clean coordinates
+	if (this.parentObject.tiled) {
+		var size = endposition.tiled.tileSize;
+		this.instructions.dx = endposition.tiled.mapX * size;
+		this.instructions.dy = endposition.tiled.mapY * size;
+	} else {	
+		this.instructions.dx = endposition.mapX;
+		this.instructions.dy = endposition.mapY;
+	}
 }
 
 Doek.Rectangle.prototype._draw = function() {

@@ -50,6 +50,7 @@ Doek.Line.prototype._calculate = function() {
 
 Doek.Line.prototype._setBeginpoint = function(beginposition) {
 	
+	// If the object is tiled, take clean coordinates
 	if (this.parentObject.tiled) {
 		var size = beginposition.tiled.tileSize;
 		this.instructions.sx = beginposition.tiled.mapX * size;
@@ -62,10 +63,11 @@ Doek.Line.prototype._setBeginpoint = function(beginposition) {
 
 Doek.Line.prototype._setEndpoint = function(endposition) {
 	
+	// If the object is tiled, take clean coordinates
 	if (this.parentObject.tiled) {
 		var size = endposition.tiled.tileSize;
-		this.instructions.sx = endposition.tiled.mapX * size;
-		this.instructions.sy = endposition.tiled.mapY * size;
+		this.instructions.dx = endposition.tiled.mapX * size;
+		this.instructions.dy = endposition.tiled.mapY * size;
 	} else {	
 		this.instructions.dx = endposition.mapX;
 		this.instructions.dy = endposition.mapY;

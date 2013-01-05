@@ -8,7 +8,30 @@ Doek.Node = function(instructions, parentObject) {
 	this.init(instructions, parentObject);
 }
 
+Doek.Node.prototype.preInit = function() {
+
+	this.drawn = false;		// Is it drawn on the parent?
+	this._idrawn = {};		// Is it drawn internally?
+	
+	this.version = '';		// What version is drawn now?
+	this.activeStyle = false;
+	this.activeStyles = {}
+	
+	this._visible = true;   // When false, the node will not be drawn
+	
+	/**
+	 * @type	{Doek.Position}
+	 */
+	this.position = {}
+	this.styles = {}
+	this._iloc = {}
+	
+	this._preInit = true;
+}
+
 Doek.Node.prototype.init = function(instructions, parentObject) {
+	
+	if (this._preInit === undefined) this.preInit();
 	
 	// The type of node to draw
 	this.type = instructions.type;
@@ -36,32 +59,19 @@ Doek.Node.prototype.init = function(instructions, parentObject) {
 	this.on = function (event, callback) {return this.event.on(event, callback)};
 	this.fire = function (eventType, caller, payload, modifiers) {return this.event.fireEvent(eventType, caller, payload, modifiers)};
 	
-	this.drawn = false;		// Is it drawn on the parent?
-	this._idrawn = {};		// Is it drawn internally?
-	
-	this.version = '';		// What version is drawn now?
-	this.activeStyle = false;
-	this.activeStyles = {}
-	
-	this._visible = true;   // When false, the node will not be drawn
-	
-	/**
-	 * @type	{Doek.Position}
-	 */
-	this.position = {}
-	this.styles = {}
-	this._iloc = {}
-	
-	// Create the default style
-	this.styles.ori = new Doek.Style('ori');
-	
-	// If another style was given, merge it into the default
-	if (this.instructions.style !== undefined) {
-		var gS = this.instructions.style;
-		this.styles.ori.merge(gS);
+	if (this.styles.ori === undefined) {
 		
-		// If we gave this another name than ori, also copy that
-		this.addStyle(gS);
+		// Create the default style
+		this.styles.ori = new Doek.Style('ori');
+		
+		// If another style was given, merge it into the default
+		if (this.instructions.style !== undefined) {
+			var gS = this.instructions.style;
+			this.styles.ori.merge(gS);
+			
+			// If we gave this another name than ori, also copy that
+			this.addStyle(gS, false, false);
+		}
 	}
 	
 	// Always set the ori style to weight 0
@@ -106,6 +116,8 @@ Doek.Node.prototype.init = function(instructions, parentObject) {
 
 		this.parentObject.fire('mousedown', this, payload);
 	});
+	
+	this.fire('afterinit', this);
 	
 	// And finally, draw
 	this.draw();
@@ -308,21 +320,36 @@ Doek.Node.prototype.move = function(position) {
 }
 
 /**
- * Add a new style to the node, only if it does not exist yet
+ * Add a new style to the node
+ * Overwrites by default
+ * 
  * @param	{Doek.Style}	style
  */
-Doek.Node.prototype.addStyle = function(style, clone) {
+Doek.Node.prototype.addStyle = function(style, clone, overwrite) {
 	
 	// Only clone the style if we really want to
 	if (clone === undefined) clone = false;
+	if (overwrite === undefined) overwrite = true;
 	
-	if (this.styles[style.name] === undefined) {
+	if (this.styles[style.name] === undefined || overwrite) {
 		// Add the new style
 		if (clone) {
 			this.styles[style.name] = new Doek.Style(style.name);
 			this.styles[style.name].merge(style);
 		} else {
 			this.styles[style.name] = style;
+		}
+		
+		// Make a link to this new style in the activeStyles object
+		// if this style is in there (if it's active)
+		if (this.activeStyles[style.name] !== undefined) {
+			this.activeStyles[style.name] = this.styles[style.name];
+			
+			// Delete the cache for this style
+			delete this._idrawn[style.name];
+			
+			// Redraw
+			this.determineStyle(true);
 		}
 	}
 }
